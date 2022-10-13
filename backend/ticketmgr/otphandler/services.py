@@ -68,7 +68,7 @@ def _custom_hmac(secret: bytes, message: bytes) -> bytes:
     s_ipad = s_pad.translate(IPAD)
     s_opad = s_pad.translate(OPAD)
     hash_i = hashlib.new(HASH_ALG, s_ipad + message).digest()
-    hash_hmac = hashlib.new(HASH_ALG, s_opad + hash_i)
+    hash_hmac = hashlib.new(HASH_ALG, s_opad + hash_i).digest()
 
     return hash_hmac
 
