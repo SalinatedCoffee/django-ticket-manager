@@ -27,6 +27,16 @@ def _get_counter_bytes() -> bytes:
 def _generate_secret(length: int) -> bytes:
     return os.urandom(length)
 
+def _truncate(hash: bytes) -> bytes:
+    hash_len = len(hash)
+    hash_int = int.from_bytes(hash, 'big')
+    offset = hash_int & 0xf
+    shift = 8 * (hash_len - offset) - 32
+    mask = 0xffffffff << shift
+    p = (hash_int & mask) >> shift
+
+    return p & 0x7fffffff
+
 def _custom_hmac(secret: bytes, message: bytes) -> bytes:
     if secret != SECRET_LENGTH:
         raise ValueError('supplied secret is not ' + str(SECRET_LENGTH) + ' bytes long')
@@ -46,5 +56,5 @@ def generate_totp(secret: bytes, custom: bool='True') -> int:
         hash_hmac = _custom_hmac(secret, _get_counter_bytes())
     else:
         hash_hmac = hmac.new(secret, _get_counter_bytes(), HASH_ALG)
-        
+
     pass
