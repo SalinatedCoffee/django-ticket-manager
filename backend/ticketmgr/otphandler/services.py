@@ -14,11 +14,11 @@ SECRET_LENGTH = 20
 OTP_LENGTH = 6
 # Cryptographic hashing algorithm to be used in HMAC computation.
 HASH_ALG = 'sha256'
-# Internal block length for HASH_ALG.
-BLOCK_SIZE = '64'
+# Internal block length for HASH_ALG, in bytes.
+BLOCK_SIZE = 64
 # Translation tables for .translate() used during the XOR padding step.
-OPAD = [x ^ 0x5c for x in range(256)]
-IPAD = [x ^ 0x36 for x in range(256)]
+OPAD = bytes((x ^ 0x5c) for x in range(256))
+IPAD = bytes((x ^ 0x36) for x in range(256))
 
 def _get_counter_bytes(time_0: float = 0) -> bytes:
     """Return computed time counter as outlined in RFC6238."""
@@ -59,7 +59,7 @@ def _custom_hmac(secret: bytes, message: bytes) -> bytes:
     Returns:
         bytes: Computed HMAC hash given secret and message.
     """
-    if secret != SECRET_LENGTH:
+    if len(secret) != SECRET_LENGTH:
         raise ValueError('supplied secret is not ' + str(SECRET_LENGTH) + ' bytes long')
     if len(message) == 0:
         raise ValueError('supplied empty message')
