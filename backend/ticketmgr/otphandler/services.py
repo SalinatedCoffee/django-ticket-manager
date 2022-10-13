@@ -27,7 +27,7 @@ def _get_counter_bytes() -> bytes:
 def _generate_secret(length: int) -> bytes:
     return os.urandom(length)
 
-def _truncate(hash: bytes) -> bytes:
+def _truncate(hash: bytes) -> int:
     hash_len = len(hash)
     hash_int = int.from_bytes(hash, 'big')
     offset = hash_int & 0xf
@@ -57,4 +57,6 @@ def generate_totp(secret: bytes, custom: bool='True') -> int:
     else:
         hash_hmac = hmac.new(secret, _get_counter_bytes(), HASH_ALG)
 
-    pass
+    hash_truncated = _truncate(hash_hmac)
+
+    return hash_truncated % (10 ** OTP_LENGTH)
