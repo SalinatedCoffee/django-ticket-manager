@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'entityhandler.apps.EntityhandlerConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -76,11 +77,11 @@ WSGI_APPLICATION = 'ticketmgr.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'debugdatabase',
-				'USER': 'debugdatabaseuser',
-				'PASSWORD': 'debugdatabasepassword',
-				'HOST': '127.0.0.1',
-				'PORT': '5432'
+        'NAME': 'ticketmgr',
+		'USER': 'django_user',
+		'PASSWORD': 'django_password',
+		'HOST': '127.0.0.1',
+		'PORT': '5432'
     }
 }
 
@@ -125,3 +126,5 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MIGRATE = False
