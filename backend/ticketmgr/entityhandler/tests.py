@@ -3,7 +3,7 @@ from django.utils import timezone
 from entityhandler.models import *
 
 TEST_EV_DATETIME = timezone.datetime.now(timezone.utc)
-TEST_EV_HASH = 'ABCD1234ABCD1234'
+TEST_EV_HASH = 'ABCD1234ABCD1234'   
 
 
 class EventsTestCase(TestCase):
@@ -44,3 +44,31 @@ class EventsTestCase(TestCase):
         # Test invalid lookup query
         with self.assertRaises(Event.DoesNotExist):
             Event.objects.get(ev_title = "Some other event")
+
+class TktEntityTestCase(TestCase):
+    def setUp(self):
+        ev = Event.objects.create(ev_title = "Some Event",
+                                  ev_description = "Dummy event instance for testing",
+                                  ev_datetime = TEST_EV_DATETIME,
+                                  ev_hash = TEST_EV_HASH)
+        TktUser.objects.create_user('username', 'user@somedomain.com', 'userpassword')
+        TktAdmin.objects.create_user('adminname', 'admin@somedomain.com', 'adminpassword')
+        TktAgent.objects.create_user('agentname', 'agent@somedomain.com', 'agentpassword',
+                                event = ev)
+
+    def test_user_entity_model(self):
+        user = TktUser.objects.get(username = 'username')
+        
+        self.assertEqual(user.email, 'user@somedomain.com')
+
+    def test_admin_entity_model(self):
+        admin = TktAdmin.objects.get(username = 'adminname')
+
+        self.assertEqual(admin.email, 'admin@somedomain.com')
+
+    def test_agent_entity_model(self):
+        agent = TktAgent.objects.get(username = 'agentname')
+        event = Event.objects.get(ev_title = "Some Event")
+
+        self.assertEqual(agent.email, 'agent@somedomain.com')
+        self.assertEqual(agent.event, event)
