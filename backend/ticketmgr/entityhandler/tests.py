@@ -168,3 +168,45 @@ class ModelRelationshipTestCase(TestCase):
         self.assertEqual(TktAgent.objects.count(), 1)
         agents[2].delete()
         self.assertEqual(evs[1].tktagent_set.count(), 0)
+
+class CheckRegistrationTestCase(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        evs = []
+        users = []
+        agents = []
+        for i in range(1, 3):
+            Event.objects.create(ev_title=f"Event {i}",
+                                 ev_description=f"This is event number {i}.",
+                                 ev_datetime=TEST_EV_DATETIME,
+                                 ev_hash=TEST_EV_HASH)
+            users.append(
+                TktUser.objects.create_user(f'user{i}',
+                                            f'user{i}@domain.com',
+                                            f'password{i}'))
+        evs.append(Event.objects.get(ev_title="Event 1"))
+        evs.append(Event.objects.get(ev_title="Event 2"))
+        for i in range(1, 3):
+            user = User.objects.create_user(f'agent{i}',
+                                            f'agent{i}@domain.com',
+                                            f'password{i}')
+            agents.append(TktAgent.objects.create(agent=user, event=evs[i-1]))
+        users[0].events.add(evs[0], evs[1])
+        users[1].events.add(evs[0])
+
+    def test_event_methods(self):
+        ev1 = Event.objects.get(ev_title="Event 1")
+        ev2 = Event.objects.get(ev_title="Event 2")
+        user1 = TktUser.objects.get(username='user1')
+        user2 = TktUser.objects.get(username='user2')
+        agent1 = User.objects.get(username='agent1').tktagent
+        agent2 = User.objects.get(username='agent2').tktagent
+        self.assertTrue(ev1.agent_is_registered(agent1))
+        self.assertFalse(ev1.agent_is_registered(agent2))
+        self.assertTrue(ev1.user_is_registered(user1))
+        self.assertFalse(ev2.user_is_registered(user2))
+        self.assertTrue(user1.registered_to_event(ev1))
+        self.assertFalse(user2.registered_to_event(ev2))
+
+    def test_tktuser_methods(self):
+        pass
