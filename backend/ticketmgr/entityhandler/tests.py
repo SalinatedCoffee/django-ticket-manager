@@ -46,6 +46,7 @@ class EventsTestCase(TestCase):
         with self.assertRaises(Event.DoesNotExist):
             Event.objects.get(ev_title="Some other event")
 
+
 class TktEntityTestCase(TestCase):
     def setUp(self):
         ev = Event.objects.create(ev_title="Some Event",
@@ -81,11 +82,8 @@ class TktEntityTestCase(TestCase):
         self.assertEqual(agent.email, 'agent@somedomain.com')
         self.assertEqual(agent.tktagent.event, event)
 
+
 class ModelRelationshipTestCase(TestCase):
-    # TODO: test cases for m2m models
-    # verify user event registration
-    # finish implementing ticket secret generation
-    # write tests for verif and secret gen
     def setUp(self):
         evs = []
         users = []
@@ -102,19 +100,71 @@ class ModelRelationshipTestCase(TestCase):
                                                        'admin'+str(i)+'@domain.com',
                                                        'admin'+str(i)+'password'))
         for i in range(1, 4):
-            user = TktAgent.objects.create_user('agent'+str(i),
-                                                'agent'+str(i)+'@domain.com',
-                                                'agent'+str(i)+'password')
-            # TODO: extend TktAgent create_user with additional event field
-            user.event = evs[2]
+            user = User.objects.create_user('agent'+str(i),
+                                            'agent'+str(i)+'@domain.com',
+                                            'agent'+str(i)+'password')
+            TktAgent.objects.create(agent=user, event=evs[2])
 
 
-    def test_user_event_many2many(self):
-        self.assertTrue(True)
+    def test_user_event_m2m(self):
+        users = [user for user in TktUser.objects.all()]
+        evs = [event for event in Event.objects.all()]
 
-    def test_admin_event_many2many(self):
-        self.assertTrue(True)
+        # All users registered to event 1
+        for user in users:
+            user.events.add(evs[0])
+        # User 1 registered to events 1 and 2
+        users[0].events.add(evs[1])
 
-    def test_agent_event_many2one(self):
+        # Check that users are registered correctly through both models
+        self.assertEqual(evs[0].tktuser_set.count(), 3)
+        self.assertEqual(users[0].events.count(), 2)
+
+        # Test correct delete behavior
+        evs[0].delete()
+        self.assertEqual(users[0].events.count(), 1)
+        self.assertEqual(users[1].events.count(), 0)
+        self.assertEqual(evs[1].tktuser_set.count(), 1)
+        users[0].delete()
+        self.assertEqual(evs[1].tktuser_set.count(), 0)
+
+    def test_admin_event_m2m(self):
+        admins = [admin for admin in TktAdmin.objects.all()]
+        evs = [event for event in Event.objects.all()]
+
+        # All admins registered to event 1
+        for admin in admins:
+            admin.events.add(evs[0])
+        # Admin 1 registered to events 1 and 2
+        admins[0].events.add(evs[1])
+
+        # Check that admins are registered correctly through both models
+        self.assertEqual(evs[0].tktadmin_set.count(), 3)
+        self.assertEqual(admins[0].events.count(), 2)
+
+        # Test correct delete behavior
+        evs[0].delete()
+        self.assertEqual(admins[0].events.count(), 1)
+        self.assertEqual(admins[1].events.count(), 0)
+        self.assertEqual(evs[1].tktadmin_set.count(), 1)
+        admins[0].delete()
+        self.assertEqual(evs[1].tktadmin_set.count(), 0)
+
+    def test_agent_event_m2o(self):
         # also remember to check for cascading deletes
-        self.assertTrue(True)
+        agents = [agent for agent in TktAgent.objects.all()]
+        evs = [event for event in Event.objects.all()]
+
+        # Event 1 assigned agents 1 and 2, event 2 assigned agent 3
+        evs[0].tktagent_set.add(agents[0], agents[1])
+        agents[2].event = evs[1]
+        agents[2].save()
+
+        self.assertEqual(evs[0].tktagent_set.count(), 2)
+        self.assertEqual(evs[1].tktagent_set.count(), 1)
+
+        # Check correct delete behavior
+        evs[0].delete()
+        self.assertEqual(TktAgent.objects.count(), 1)
+        agents[2].delete()
+        self.assertEqual(evs[1].tktagent_set.count(), 0)
