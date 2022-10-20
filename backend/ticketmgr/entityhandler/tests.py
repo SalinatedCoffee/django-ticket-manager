@@ -201,6 +201,7 @@ class CheckRegistrationTestCase(TestCase):
         user2 = TktUser.objects.get(username='user2')
         agent1 = User.objects.get(username='agent1').tktagent
         agent2 = User.objects.get(username='agent2').tktagent
+
         self.assertTrue(ev1.agent_is_registered(agent1))
         self.assertFalse(ev1.agent_is_registered(agent2))
         self.assertTrue(ev1.user_is_registered(user1))
@@ -209,4 +210,10 @@ class CheckRegistrationTestCase(TestCase):
         self.assertFalse(user2.registered_to_event(ev2))
 
     def test_tktuser_methods(self):
-        pass
+        ev1 = Event.objects.get(ev_title="Event 1")
+        ev2 = Event.objects.get(ev_title="Event 2")
+        user1 = TktUser.objects.get(username='user1')
+        user2 = TktUser.objects.get(username='user2')
+
+        self.assertTrue(user1.registered_to_event(ev1))
+        self.assertFalse(user2.registered_to_event(ev2))
