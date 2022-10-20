@@ -1,3 +1,4 @@
+# TODO: Revisit user models later, current implmentation of TktAgent is messy
 """Module that contains Django Models representing events and users.
 """
 
@@ -18,26 +19,21 @@ class Event(models.Model):
     ev_datetime = models.DateTimeField()
     ev_hash = models.CharField(max_length = 16)
 
-class TktEntity(User):
-    """Django User used as a base class for entities.
-    """
-    class Meta: # pylint: disable=missing-class-docstring, too-few-public-methods
-        abstract = True
-
-class TktUser(TktEntity):
+class TktUser(User):
     """Django User that represents your typical user.
     A user cannot create, modify, and register for events.
     """
     events = models.ManyToManyField(Event)
 
-class TktAdmin(TktEntity):
+class TktAdmin(User):
     """Django User that represents event administrators.
     An admin can create, modify, and register users and agents for events.
     """
     events = models.ManyToManyField(Event)
 
-class TktAgent(TktEntity):
+class TktAgent(models.Model):
     """Django User that represents event agents.
     An agent can verify user tickets for events.
     """
+    agent = models.OneToOneField(User, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
