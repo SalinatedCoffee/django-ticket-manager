@@ -89,20 +89,20 @@ class ModelRelationshipTestCase(TestCase):
         users = []
         admins = []
         for i in range(1, 4):
-            evs.append(Event.objects.create(ev_title="Event "+str(i),
-                                            ev_description="This is event number "+str(i)+'.',
+            evs.append(Event.objects.create(ev_title=f"Event {i}",
+                                            ev_description=f"This is event number {i}.",
                                             ev_datetime=TEST_EV_DATETIME,
                                             ev_hash=TEST_EV_HASH))
-            users.append(TktUser.objects.create_user('user'+str(i),
-                                                     'user'+str(i)+'@domain.com',
-                                                     'user'+str(i)+'password'))
-            admins.append(TktAdmin.objects.create_user('admin'+str(i),
-                                                       'admin'+str(i)+'@domain.com',
-                                                       'admin'+str(i)+'password'))
+            users.append(TktUser.objects.create_user(f'user{i}',
+                                                     f'user{i}@domain.com',
+                                                     f'user{i}password'))
+            admins.append(TktAdmin.objects.create_user(f'admin{i}',
+                                                       f'admin{i}@domain.com',
+                                                       f'admin{i}password'))
         for i in range(1, 4):
-            user = User.objects.create_user('agent'+str(i),
-                                            'agent'+str(i)+'@domain.com',
-                                            'agent'+str(i)+'password')
+            user = User.objects.create_user(f'agent{i}',
+                                            f'agent{i}@domain.com',
+                                            f'agent{i}password')
             TktAgent.objects.create(agent=user, event=evs[2])
 
 
