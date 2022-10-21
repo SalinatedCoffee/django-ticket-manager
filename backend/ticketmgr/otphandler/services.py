@@ -5,6 +5,7 @@ import hmac
 import hashlib
 import os
 import time
+from entityhandler.models import TktUser, Event
 
 # Duration of generated code, in seconds.
 TIME_INTERVAL = 30
@@ -78,7 +79,7 @@ def generate_totp(secret: bytes, custom: bool='False') -> int:
     Args:
         secret (bytes): The shared secret to generate codes with.
         custom (bool, optional): Use the custom implementation of the HMAC algorithm.
-                                 Defaults to 'False'.
+                                 Defaults to False.
 
     Returns:
         int: Generated TOTP code with length OTP_LENGTH digits.
@@ -91,3 +92,37 @@ def generate_totp(secret: bytes, custom: bool='False') -> int:
     hash_truncated = _truncate(hash_hmac)
 
     return hash_truncated % (10 ** OTP_LENGTH)
+
+def generate_ticket_secret(user: TktUser, event: Event) -> bytes:
+    # TODO: Currently the per-ticket secret is generated from a combination of
+    #       the user's hashed password and event-unique hash.
+    #       This is a significant security concern, so consider refactoring TktUser
+    #       and this method so that it uses some user-unique value instead.
+    """Generates a per-ticket secret for a user and an event.
+    As long as TktUser and Event are valid, a secret will always be generated.
+    It is the caller's responsibility to check the event roster for the user.
+
+    Args:
+        user (TktUser): The user that the ticket is registered to.
+        event (Event): The event that the ticket is registered to.
+
+    Returns:
+        bytes: A bytes object of length len(_generate_secret())
+    """
+    if user._state.db is None:
+        raise ValueError('supplied TktUser has no database entry')
+    if event._state.db is None:
+        raise ValueError('supplied Event has no database entry')
+
+    entropy_e = SECRET_LENGTH // 2
+    entropy_u = SECRET_LENGTH - entropy_e
+    
+    # Entropy sanity check
+    if entropy_e > len(event.ev_hash):
+        raise ValueError('not enough entropy in ev_hash')
+    # Get half of the required entropy from the event hash
+    secret_e = bytes(event.ev_hash[-entropy_e:], encoding='utf-8')
+    # Get the other half from the user's password hash
+    secret_u = bytes(user.password[-entropy_u:], encoding='utf-8')
+
+    return secret_e + secret_u
