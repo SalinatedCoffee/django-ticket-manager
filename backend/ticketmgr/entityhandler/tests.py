@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.utils import timezone
-from entityhandler.models import *
+from .models import *
 
 TEST_EV_DATETIME = timezone.datetime.now(timezone.utc)
 TEST_EV_HASH = 'ABCD1234ABCD1234'   
