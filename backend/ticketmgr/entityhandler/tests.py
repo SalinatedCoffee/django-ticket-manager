@@ -93,10 +93,10 @@ class ModelRelationshipTestCase(TestCase):
                                             ev_description=f"This is event number {i}.",
                                             ev_datetime=TEST_EV_DATETIME,
                                             ev_hash=TEST_EV_HASH))
-            users.append(TktUser.objects.create(User.objects.create(f'user{i}',
+            users.append(TktUser.objects.create(user=User.objects.create_user(f'user{i}',
                                                      f'user{i}@domain.com',
                                                      f'user{i}password')))
-            admins.append(TktAdmin.objects.create(User.objects.create(f'admin{i}',
+            admins.append(TktAdmin.objects.create(admin=User.objects.create_user(f'admin{i}',
                                                        f'admin{i}@domain.com',
                                                        f'admin{i}password')))
         for i in range(1, 4):
@@ -181,7 +181,7 @@ class CheckRegistrationTestCase(TestCase):
                                  ev_datetime=TEST_EV_DATETIME,
                                  ev_hash=TEST_EV_HASH)
             users.append(
-                TktUser.objects.create(User.objects.create(f'user{i}',
+                TktUser.objects.create(user=User.objects.create_user(f'user{i}',
                                             f'user{i}@domain.com',
                                             f'password{i}')))
         evs.append(Event.objects.get(ev_title="Event 1"))
