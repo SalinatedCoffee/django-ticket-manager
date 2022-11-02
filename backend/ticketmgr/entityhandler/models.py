@@ -45,11 +45,12 @@ class Event(models.Model):
         """
         return agent.event.pk == self.pk
 
-class TktUser(User):
+class TktUser(models.Model):
     """Django User that represents your typical user.
     A user cannot create, modify, and register for events.
     """
-    events = models.ManyToManyField(Event)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    events = models.ManyToManyField(Event, blank=True)
 
     def registered_to_event(self, event: Event) -> bool:
         """Checks if an event contains a user in its roster.
@@ -63,11 +64,12 @@ class TktUser(User):
         """
         return self.events.filter(pk=event.pk).exists()
 
-class TktAdmin(User):
+class TktAdmin(models.Model):
     """Django User that represents event administrators.
     An admin can create, modify, and register users and agents for events.
     """
-    events = models.ManyToManyField(Event)
+    admin = models.OneToOneField(User, on_delete=models.CASCADE)
+    events = models.ManyToManyField(Event, blank=True)
 
 class TktAgent(models.Model):
     # TODO: check and enforce that an agent always gets assigned an event
