@@ -53,12 +53,12 @@ class TktEntityTestCase(TestCase):
                                   ev_description="Dummy event instance for testing",
                                   ev_datetime=TEST_EV_DATETIME,
                                   ev_hash=TEST_EV_HASH)
-        TktUser.objects.create_user('username',
+        TktUser.objects.create(user=User.objects.create_user('username',
                                     'user@somedomain.com',
-                                    'userpassword')
-        TktAdmin.objects.create_user('adminname',
+                                    'userpassword'))
+        TktAdmin.objects.create(admin=User.objects.create_user('adminname',
                                      'admin@somedomain.com',
-                                     'adminpassword')
+                                     'adminpassword'))
         TktAgent.objects.create(agent=User.objects.create_user(
                                       'agentname',
                                       'agent@somedomain.com',
@@ -66,21 +66,21 @@ class TktEntityTestCase(TestCase):
                                 event=ev)
 
     def test_user_entity_model(self):
-        user = TktUser.objects.get(username='username')
+        user = User.objects.get(username='username').tktuser
         
-        self.assertEqual(user.email, 'user@somedomain.com')
+        self.assertEqual(user.user.email, 'user@somedomain.com')
 
     def test_admin_entity_model(self):
-        admin = TktAdmin.objects.get(username='adminname')
+        admin = User.objects.get(username='adminname').tktadmin
 
-        self.assertEqual(admin.email, 'admin@somedomain.com')
+        self.assertEqual(admin.admin.email, 'admin@somedomain.com')
 
     def test_agent_entity_model(self):
-        agent = User.objects.get(username='agentname')
+        agent = User.objects.get(username='agentname').tktagent
         event = Event.objects.get(ev_title="Some Event")
 
-        self.assertEqual(agent.email, 'agent@somedomain.com')
-        self.assertEqual(agent.tktagent.event, event)
+        self.assertEqual(agent.agent.email, 'agent@somedomain.com')
+        self.assertEqual(agent.event, event)
 
 
 class ModelRelationshipTestCase(TestCase):
@@ -93,12 +93,12 @@ class ModelRelationshipTestCase(TestCase):
                                             ev_description=f"This is event number {i}.",
                                             ev_datetime=TEST_EV_DATETIME,
                                             ev_hash=TEST_EV_HASH))
-            users.append(TktUser.objects.create_user(f'user{i}',
+            users.append(TktUser.objects.create(User.objects.create(f'user{i}',
                                                      f'user{i}@domain.com',
-                                                     f'user{i}password'))
-            admins.append(TktAdmin.objects.create_user(f'admin{i}',
+                                                     f'user{i}password')))
+            admins.append(TktAdmin.objects.create(User.objects.create(f'admin{i}',
                                                        f'admin{i}@domain.com',
-                                                       f'admin{i}password'))
+                                                       f'admin{i}password')))
         for i in range(1, 4):
             user = User.objects.create_user(f'agent{i}',
                                             f'agent{i}@domain.com',
@@ -181,9 +181,9 @@ class CheckRegistrationTestCase(TestCase):
                                  ev_datetime=TEST_EV_DATETIME,
                                  ev_hash=TEST_EV_HASH)
             users.append(
-                TktUser.objects.create_user(f'user{i}',
+                TktUser.objects.create(User.objects.create(f'user{i}',
                                             f'user{i}@domain.com',
-                                            f'password{i}'))
+                                            f'password{i}')))
         evs.append(Event.objects.get(ev_title="Event 1"))
         evs.append(Event.objects.get(ev_title="Event 2"))
         for i in range(1, 3):
@@ -197,8 +197,8 @@ class CheckRegistrationTestCase(TestCase):
     def test_event_methods(self):
         ev1 = Event.objects.get(ev_title="Event 1")
         ev2 = Event.objects.get(ev_title="Event 2")
-        user1 = TktUser.objects.get(username='user1')
-        user2 = TktUser.objects.get(username='user2')
+        user1 = User.objects.get(username='user1').tktuser
+        user2 = User.objects.get(username='user2').tktuser
         agent1 = User.objects.get(username='agent1').tktagent
         agent2 = User.objects.get(username='agent2').tktagent
 
@@ -212,8 +212,8 @@ class CheckRegistrationTestCase(TestCase):
     def test_tktuser_methods(self):
         ev1 = Event.objects.get(ev_title="Event 1")
         ev2 = Event.objects.get(ev_title="Event 2")
-        user1 = TktUser.objects.get(username='user1')
-        user2 = TktUser.objects.get(username='user2')
+        user1 = User.objects.get(username='user1').tktuser
+        user2 = User.objects.get(username='user2').tktuser
 
         self.assertTrue(user1.registered_to_event(ev1))
         self.assertFalse(user2.registered_to_event(ev2))
