@@ -1,4 +1,3 @@
-# TODO: Revisit user models later, current implmentation of TktAgent is messy
 """Module that contains Django Models representing events and users.
 """
 
@@ -6,7 +5,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Event(models.Model):
-    """Djando Model that represents an event.
+    """Django Model that represents an event.
 
     Attributes:
         ev_title: A TextField() that contains the event name.
@@ -46,7 +45,7 @@ class Event(models.Model):
         return agent.event.pk == self.pk
 
 class TktUser(models.Model):
-    """Django User that represents your typical user.
+    """Django model that represents a typical user.
     A user cannot create, modify, and register for events.
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -65,17 +64,15 @@ class TktUser(models.Model):
         return self.events.filter(pk=event.pk).exists()
 
 class TktAdmin(models.Model):
-    """Django User that represents event administrators.
+    """Django model that represents event administrators.
     An admin can create, modify, and register users and agents for events.
     """
     admin = models.OneToOneField(User, on_delete=models.CASCADE)
     events = models.ManyToManyField(Event, blank=True)
 
 class TktAgent(models.Model):
-    # TODO: check and enforce that an agent always gets assigned an event
-    # upon init
-    """Django User that represents event agents.
+    """Django model that represents event agents.
     An agent can verify user tickets for events.
     """
     agent = models.OneToOneField(User, on_delete=models.CASCADE)
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, blank=False)
