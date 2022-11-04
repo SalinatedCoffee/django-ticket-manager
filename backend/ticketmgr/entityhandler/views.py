@@ -65,12 +65,36 @@ def event_info(request, event_id):
 
 @api_view(['GET', 'POST'])
 def event_users(request, event_id):
-    return Response({'event_users': 'none'})
+    if request.method == 'GET':
+        try:
+            event = Event.objects.get(pk=event_id)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        users = TktUserSerializer(event.tktuser_set.all(), many=True)
+        return Response(users.data)
+    elif request.methods == 'POST':
+        return Response({'event_users': 'none'})
 
 @api_view(['GET', 'POST'])
 def event_agents(request, event_id):
-    return Response({'event_agents': 'none'})
+    if request.method == 'GET':
+        try:
+            event = Event.objects.get(pk=event_id)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        agents = TktAgentSerializer(event.tktagent_set.all(), many=True)
+        return Response(agents.data)
+    elif request.method == 'POST':
+        return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 
 @api_view(['GET', 'POST'])
 def event_admins(request, event_id):
-    return Response({'event_admins': 'none'})
+    if request.method == 'GET':
+        try:
+            event = Event.objects.get(pk=event_id)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        admins = TktAdminSerializer(event.tktadmin_set.all(), many=True)
+        return Response(admins.data)
+    elif request.methods == 'POST':
+        return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
