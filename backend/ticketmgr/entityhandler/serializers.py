@@ -20,8 +20,8 @@ class TktUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TktUser
-        fields = ['id', 'user', 'event_count']
-        read_only_fields = ['id', 'user', 'event_count']
+        fields = ['id', 'user', 'uuid', 'event_count']
+        read_only_fields = ['id', 'user', 'uuid', 'event_count']
         '''
         extra_kwargs = {
             'password': {'write_only': True}
@@ -62,5 +62,5 @@ class EventSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Event
-        fields = ['id', 'ev_title', 'ev_description', 'ev_datetime', 'ev_hash']
-        read_only_fields = ['id', 'ev_hash']
+        fields = ['id', 'title', 'description', 'datetime', 'uuid']
+        read_only_fields = ['id', 'uuid']
