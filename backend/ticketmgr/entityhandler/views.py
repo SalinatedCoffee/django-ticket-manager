@@ -44,11 +44,24 @@ def user_events(request, username):
 
 @api_view(['GET', 'POST'])
 def events(request):
-    return Response({'event_new': 'none'})
+    if request.method == 'GET':
+        events = EventSerializer(list(Event.objects.all()), many=True)
+        return Response(events.data)
+    elif request.method == 'POST':
+        serial = EventSerializer(data=request.data)
+        if serial.is_valid():
+            serial.save()
+            return Response(serial.data, status=status.HTTP_201_CREATED)
+        return Response(serial.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def event_info(request, event_id):
-    return Response({'event_info': str(event_id)})
+    if request.method == 'GET':
+        try:
+            event = EventSerializer(Event.objects.get(pk=event_id))
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(event.data)
 
 @api_view(['GET', 'POST'])
 def event_users(request, event_id):
