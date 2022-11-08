@@ -10,7 +10,10 @@ class UserSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name']
+        fields = ['username', 'first_name', 'last_name', 'email', 'password']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
 
 class TktUserSerializer(serializers.ModelSerializer):
     """DRF serializer for ``entityhandler.models.TktUser``.
@@ -22,11 +25,6 @@ class TktUserSerializer(serializers.ModelSerializer):
         model = TktUser
         fields = ['id', 'user', 'uuid', 'event_count']
         read_only_fields = ['id', 'user', 'uuid', 'event_count']
-        '''
-        extra_kwargs = {
-            'password': {'write_only': True}
-        }
-        '''
         depth = 1
     
     def get_event_count(self, obj):
@@ -42,6 +40,7 @@ class TktAdminSerializer(serializers.ModelSerializer):
         model = TktAdmin
         fields = ['id', 'admin', 'event_count']
         read_only_fields = ['id', 'admin', 'event_count']
+        depth = 1
 
     def get_event_count(self, obj):
         return obj.events.count()
