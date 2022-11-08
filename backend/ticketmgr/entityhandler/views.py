@@ -1,3 +1,5 @@
+#TODO: Consider catching multiple exceptions and returning appropriate
+#HTTP response codes
 from .serializers import *
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -41,7 +43,8 @@ def user_events(request, username):
     try:
         user = User.objects.get(username=username).tktuser
     except:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'User does not exist.'},
+                        status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         # TODO: Define separate serializers for list/detail view
@@ -52,7 +55,8 @@ def user_events(request, username):
         try:
             event = Event.objects.get(uuid=request.data['event_uuid'])
         except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Event does not exist.'},
+                            status.HTTP_404_NOT_FOUND)
         user.events.add(event)
         return Response(EventSerializer(event).data)
 
@@ -69,8 +73,8 @@ def event(request):
         serial = EventSerializer(data=request.data)
         if serial.is_valid():
             serial.save()
-            return Response(serial.data, status=status.HTTP_201_CREATED)
-        return Response(serial.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serial.data, status.HTTP_201_CREATED)
+        return Response(serial.errors, status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def event_info(request, event_uuid):
@@ -85,21 +89,32 @@ def event_info(request, event_uuid):
 
 @api_view(['GET', 'POST'])
 def event_users(request, event_uuid):
-    """``GET``: Returns a JSON representation of all ``TktUser``s that reference
-    ``Event`` with ``event_uuid``.
-    ``POST``: Adds a reference to ``Event`` if it exists.
+    """First queries an ``Event`` with ``event_uuid``. Then on
+    ``GET``: Returns a JSON representation of all ``TktUser``s that reference
+    the queried ``Event``.
+    ``POST``: Adds a reference to the queried ``Event`` to a ``TktUser`` with
+    ``event_uuid``.
+    JSON format: ``{'user_uuid': <str:uuid>}``
     """
+    try:
+        event = Event.objects.get(uuid=event_uuid)
+    except:
+        return Response({'error': 'Event does not exist.'},
+                        status.HTTP_404_NOT_FOUND)
+
     if request.method == 'GET':
-        try:
-            event = Event.objects.get(uuid=event_uuid)
-        except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
         users = TktUserSerializer(event.tktuser_set.all(), many=True)
         return Response(users.data)
 
     elif request.methods == 'POST':
-        return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
-
+        try:
+            user = TktUser.objects.get(uuid=request.data['user_uuid'])
+        except:
+            return Response({'error': 'User does not exist.'},
+                            status.HTTP_404_NOT_FOUND)
+        user.events.add(event)
+        return Response(TktUserSerializer(user).data, status.HTTP_200_OK)
+        
 @api_view(['GET', 'POST'])
 def event_agents(request, event_uuid):
     """``GET``: Returns a JSON representation of all ``TktAgent``s that reference
