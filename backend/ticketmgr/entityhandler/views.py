@@ -38,7 +38,7 @@ def user_events(request, username):
     the queried ``TktUser``.
     ``POST``: Adds a reference to an ``Event`` with ``event_uuid``
     to the queried ``TktUser``.
-    JSON format: ``{'event_uuid': <str:uuid>}``
+    JSON format: ``{'event_uuid': <str>}``
     """
     try:
         user = User.objects.get(username=username).tktuser
@@ -93,8 +93,8 @@ def event_users(request, event_uuid):
     ``GET``: Returns a JSON representation of all ``TktUser``s that reference
     the queried ``Event``.
     ``POST``: Adds a reference to the queried ``Event`` to a ``TktUser`` with
-    ``event_uuid``.
-    JSON format: ``{'user_uuid': <str:uuid>}``
+    ``user_uuid``.
+    JSON format: ``{'user_uuid': <str>}``
     """
     try:
         event = Event.objects.get(uuid=event_uuid)
@@ -115,36 +115,44 @@ def event_users(request, event_uuid):
         user.events.add(event)
         return Response(TktUserSerializer(user).data, status.HTTP_200_OK)
         
-@api_view(['GET', 'POST'])
+@api_view(['GET'])
 def event_agents(request, event_uuid):
-    """``GET``: Returns a JSON representation of all ``TktAgent``s that reference
-    ``Event`` with ``event_id``.
-    ``POST``: Adds a reference to ``Event`` if it exists.
+    """Returns a JSON representation of all ``TktAgent``s that reference
+    an ``Event`` with ``event_uuid``.
     """
     if request.method == 'GET':
         try:
             event = Event.objects.get(uuid=event_uuid)
         except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Event does not exist.'},
+                            status.HTTP_404_NOT_FOUND)
         agents = TktAgentSerializer(event.tktagent_set.all(), many=True)
-        return Response(agents.data)
-
-    elif request.method == 'POST':
-        return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
+        return Response(agents.data, status.HTTP_200_OK)
 
 @api_view(['GET', 'POST'])
 def event_admins(request, event_uuid):
-    """``GET``: Returns a JSON representation of all ``TktAdmin``s that reference
-    ``Event`` with ``event_id``.
-    ``POST``: Adds a reference to ``Event`` if it exists.
+    """First queries an ``Event`` with ``event_uuid``. Then on
+    ``GET``: Returns a JSON representation of all ``TktAdmin``s that reference
+    the queried ``Event``.
+    ``POST``: Adds a reference to the queried ``Event`` to a ``TktAdmin`` with
+    ``admin_username``.
+    JSON format: ``{'admin_username': <str>}``
     """
+    try:
+        event = Event.objects.get(uuid=event_uuid)
+    except:
+        return Response({'error': 'Event does not exist.'},
+                        status.HTTP_404_NOT_FOUND)
+
     if request.method == 'GET':
-        try:
-            event = Event.objects.get(uuid=event_uuid)
-        except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
         admins = TktAdminSerializer(event.tktadmin_set.all(), many=True)
-        return Response(admins.data)
+        return Response(admins.data, status.HTTP_200_OK)
 
     elif request.methods == 'POST':
-        return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
+        try:
+            admin = User.objects.get(username=request.data['admin_username']).tktadmin
+        except:
+            return Response({'error': 'Admin does not exist.'},
+                            status.HTTP_404_NOT_FOUND)
+        admin.events.add(event)
+        return Response(TktAdminSerializer(admin).data, status.HTTP_200_OK)
