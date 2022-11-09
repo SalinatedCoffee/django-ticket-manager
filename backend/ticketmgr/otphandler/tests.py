@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
 from entityhandler.models import Event, TktUser
@@ -23,15 +24,19 @@ class ServicesTestCase(TestCase):
         self.assertNotEquals(custom_totp, custom_totp2)
     
     def test_ticket_secret_generation(self):
-        ev = Event.objects.create(ev_title="Some Event",
-                                  ev_description="Some event description",
-                                  ev_datetime=timezone.datetime.now(timezone.utc),
-                                  ev_hash='1234ABCD5678EFGH')
-        ev_shallow = Event(ev_title="Title", ev_description="Description",
-                           ev_datetime=timezone.datetime.now(timezone.utc),
-                           ev_hash='1234123412341234')
-        user = TktUser.objects.create_user('user', 'user@domain.com', 'userpassword')
-        user_shallow = TktUser('username', 'email', 'password')
+        ev = Event.objects.create(title="Some Event",
+                                  description="Some event description",
+                                  datetime=timezone.datetime.now(timezone.utc))
+        ev_shallow = Event(title="Title",
+                           description="Description",
+                           datetime=timezone.datetime.now(timezone.utc))
+        django_user = User.objects.create_user('user999', 'user999@domain.com',
+                                               'user999pass',
+                                               first_name='Jane',
+                                               last_name='Doe')
+        duser_shallow = User('user111', 'user111@domain.com', 'user111pass')
+        user = TktUser.objects.create(user=django_user)
+        user_shallow = TktUser(duser_shallow)
         user_shallow.is_active = False
 
         with self.assertRaises(ValueError):
@@ -44,5 +49,5 @@ class ServicesTestCase(TestCase):
         tkt_secret = services.generate_ticket_secret(user, ev)
         
         self.assertEqual(len(tkt_secret), 20)
-        self.assertEqual(tkt_secret[:10], b'CD5678EFGH')
-        self.assertEqual(tkt_secret[-10:], bytes(user.password[-10:], encoding='utf-8'))
+        self.assertEqual(tkt_secret[:10], bytes(str(ev.uuid)[-10:], encoding='utf-8'))
+        self.assertEqual(tkt_secret[-10:], bytes(str(user.uuid)[-10:], encoding='utf-8'))
