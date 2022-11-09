@@ -17,11 +17,11 @@ class ServicesTestCase(TestCase):
         with self.assertRaises(ValueError):
             services.generate_totp(b'', True)
         # Check correct HMAC computation of custom implementation
-        self.assertEquals(custom_totp, pyhmac_totp)
+        self.assertEqual(custom_totp, pyhmac_totp)
         # Check whether TOTP codes of correct length are generated
-        self.assertEquals(len(str(custom_totp)), 6)
+        self.assertEqual(len(custom_totp), 6)
         # Check if different TOTP codes are generated for different secrets
-        self.assertNotEquals(custom_totp, custom_totp2)
+        self.assertNotEqual(custom_totp, custom_totp2)
     
     def test_ticket_secret_generation(self):
         ev = Event.objects.create(title="Some Event",

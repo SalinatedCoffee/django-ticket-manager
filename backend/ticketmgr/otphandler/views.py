@@ -1,5 +1,5 @@
-import services
 from entityhandler.models import *
+from otphandler import services
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -61,7 +61,7 @@ def ticket_auth(request):
             return Response({'error': 'User is not registered to event.'},
                             status.HTTP_400_BAD_REQUEST)
         tkt_secret = services.generate_ticket_secret(user, event)
-        totp_authority = str(services.generate_totp(tkt_secret))
+        totp_authority = services.generate_totp(tkt_secret)
         if totp == totp_authority:
             return Response({'ticket_is_valid': True},
                             status.HTTP_200_OK)
