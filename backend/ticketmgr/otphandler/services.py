@@ -73,7 +73,7 @@ def _custom_hmac(secret: bytes, message: bytes) -> bytes:
 
     return hash_hmac
 
-def generate_totp(secret: bytes, custom: bool='False') -> int:
+def generate_totp(secret: bytes, custom: bool='False') -> str:
     """Generates TOTP codes based on either the custom or built-in HMAC module.
 
     Args:
@@ -82,7 +82,7 @@ def generate_totp(secret: bytes, custom: bool='False') -> int:
                                  Defaults to False.
 
     Returns:
-        int: Generated TOTP code with length OTP_LENGTH digits.
+        str: Generated TOTP code with length OTP_LENGTH digits.
     """
     if custom:
         hash_hmac = _custom_hmac(secret, _get_counter_bytes())
@@ -91,7 +91,7 @@ def generate_totp(secret: bytes, custom: bool='False') -> int:
 
     hash_truncated = _truncate(hash_hmac)
 
-    return hash_truncated % (10 ** OTP_LENGTH)
+    return str(hash_truncated % (10 ** OTP_LENGTH)).zfill(OTP_LENGTH)
 
 def generate_ticket_secret(user: TktUser, event: Event) -> bytes:
     """Generates a per-ticket secret for a user and an event.
