@@ -7,19 +7,23 @@ from rest_framework.response import Response
 
 @api_view(['POST'])
 def ticket_new(request):
-    try:
-        user = TktUser.objects.get(uuid=request.data['user_uuid'])
-    except:
-        return Response({'error': 'User does not exist.'},
-                        status.HTTP_404_NOT_FOUND)
-    
-    try:
-        event = Event.objects.get(uuid=request.data['event_uuid'])
-    except:
-        return Response({'error': 'Event does not exist.'},
-                        status.HTTP_404_NOT_FOUND)
-
+    """Adds a reference to an ``Event`` with ``event_uuid`` to a ``TktUser``
+    with ``event_uuid``.
+    On success, sends a JSON payload with the ticket-unique secret.
+    """
     if request.header == 'POST':
+        try:
+            user = TktUser.objects.get(uuid=request.data['user_uuid'])
+        except:
+            return Response({'error': 'User does not exist.'},
+                            status.HTTP_404_NOT_FOUND)
+        
+        try:
+            event = Event.objects.get(uuid=request.data['event_uuid'])
+        except:
+            return Response({'error': 'Event does not exist.'},
+                            status.HTTP_404_NOT_FOUND)
+
         if event.user_is_registered(user):
             return Response({'error': 'User already registered to event.'},
                             status.HTTP_409_CONFLICT)
@@ -30,4 +34,5 @@ def ticket_new(request):
 
 @api_view(['POST'])
 def ticket_auth(request):
+
     return Response({'ticket_auth': 'none'})
