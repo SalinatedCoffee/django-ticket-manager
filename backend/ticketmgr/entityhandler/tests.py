@@ -1,6 +1,9 @@
+#TODO: Refactor tests using self.<var> in setup method
 from django.test import TestCase
 from django.utils import timezone
+from rest_framework.test import APIClient
 from .models import *
+from .views import *
 
 TEST_EV_DATETIME = timezone.datetime.now(timezone.utc)
 
@@ -209,3 +212,74 @@ class CheckRegistrationTestCase(TestCase):
 
         self.assertTrue(user1.registered_to_event(ev1))
         self.assertFalse(user2.registered_to_event(ev2))
+
+class ViewsTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.users = []
+        self.events = []
+        self.admins = []
+        self.agents = []
+        for i in range(3):
+            u = TktUser.objects.create(
+                user=User.objects.create_user(f'user{i}',
+                                              f'user{i}@domain.com',
+                                              f'user{i}pass',
+                                              first_name=f'John{i}',
+                                              last_name=f'Doe{i}'))
+            e = Event.objects.create(title=f'Event {i}',
+                                     description=f'This is event {i}.',
+                                     datetime=timezone.datetime.now(timezone.utc))
+            a = TktAdmin.objects.create(
+                admin=User.objects.create_user(f'admin{i}',
+                                               f'admin{i}@domain.com',
+                                               f'admin{i}pass',
+                                               first_name=f'Jane{i}',
+                                               last_name=f'Doe{i}'))
+            g = TktAgent.objects.create(
+                agent=User.objects.create_user(f'agent{i}',
+                                               f'agent{i}@domain.com',
+                                               f'agent{i}pass',
+                                               first_name=f'John{i}',
+                                               last_name=f'Appleseed{i}'),
+                event=e)
+            self.users.append(u)
+            self.events.append(e)
+            self.admins.append(a)
+            self.agents.append(g)
+
+    def test_user_get_endpoints(self):
+        # /api/user/<str>
+        # Test valid TktUser request for existing user
+        response = self.client.get('/api/user/user1')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['user']['first_name'], 'John1')
+        # Test valid TktUser request for non-existing user
+        response = self.client.get('/api/user/no_user')
+        self.assertEqual(response.status_code, 404)
+        # Test correct handling of non-TktUser request attempts
+        response = self.client.get('/api/user/admin1')
+        self.assertEqual(response.status_code, 404)
+        # Test correct handling of requests with unsupported methods
+        response = self.client.post('/api/user/user1', {'name': 'payload'})
+        self.assertEqual(response.status_code, 405)
+
+        # /api/user/<str>/event
+        for i in range(3): self.users[0].events.add(self.events[i])
+        self.users[1].events.add(self.events[0])
+        # Test valid Event request for existing TktUser
+        response = self.client.get(f'/api/user/{self.users[0].user.username}/event')
+        self.assertEqual(len(response.data), 3)
+        # Test valid Event request for non-existing user
+        response = self.client.get('/api/user/no_user/event')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['error'], 'User does not exist.')
+
+    def test_user_post_endpoints(self):
+        self.assertTrue(True)
+
+    def test_event_get_endpoints(self):
+        self.assertTrue(True)
+
+    def test_event_post_endpoints(self):
+        self.assertTrue(True)
