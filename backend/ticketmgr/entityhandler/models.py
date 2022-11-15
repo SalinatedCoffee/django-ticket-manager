@@ -72,6 +72,7 @@ class TktAdmin(models.Model):
     events = models.ManyToManyField(Event, blank=True)
 
 class TktAgent(models.Model):
+    # TODO: Consider allowing event to be blank on init but write-once
     """Django model that represents event agents.
     An agent can verify user tickets for events.
     """

@@ -8,7 +8,6 @@ from rest_framework.response import Response
 
 @api_view(['POST'])
 def user_signup(request):
-    #TODO: return different status code for different errors
     """Creates a new ``User`` which is then linked to a new ``TktUser``.
     """
     serializer = UserSerializer(data=request.data)
