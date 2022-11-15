@@ -1,8 +1,10 @@
 #TODO: Refactor tests using self.<var> in setup method
 import uuid
+
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
+
 from .models import *
 from .views import *
 
@@ -324,9 +326,60 @@ class ViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'Event does not exist.')
 
-
     def test_event_get_endpoints(self):
-        self.assertTrue(True)
+        # /api/event
+        # Test valid GET request
+        response = self.client.get('/api/event')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), len(self.events))
+        ev = Event.objects.get(uuid=response.data[0]['uuid'])
+        self.assertEqual(ev.title, response.data[0]['title'])
+
+        # /api/event/<uuid>
+        # Test valid GET request
+        ev_uuid = self.events[0].uuid
+        response = self.client.get(f'/api/event/{ev_uuid}')
+        self.assertEqual(self.events[0].title, response.data['title'])
+        # Test GET request on non-existant event
+        response = self.client.get(f'/api/event/{uuid.uuid4()}')
+        self.assertEqual(response.status_code, 404)
+
+        # /api/event/<uuid>/user
+        for i in range(3): self.users[i].events.add(self.events[0])
+        # Test valid GET request on event with registered users
+        ev_uuid = self.events[0].uuid
+        response = self.client.get(f'/api/event/{ev_uuid}/user')
+        self.assertEqual(len(self.events), len(response.data))
+        # Test valid GET request on event with no registered users
+        ev_uuid = self.events[1].uuid
+        response = self.client.get(f'/api/event/{ev_uuid}/user')
+        self.assertEqual(self.events[1].tktuser_set.count(), len(response.data))
+        # Test GET request on non-existant event
+        response = self.client.get(f'/api/event/{uuid.uuid4()}/user')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['error'], 'Event does not exist.')
+
+        # /api/event/<uuid>/agent
+        # Test valid GET request
+        ev_uuid = self.events[0].uuid
+        response = self.client.get(f'/api/event/{ev_uuid}/agent')
+        self.assertEqual(response.data[0]['event']['uuid'], str(ev_uuid))
+        self.assertEqual(response.data[0]['agent']['email'], self.agents[0].agent.email)
+
+        # /api/event/<uuid>/admin
+        for i in range(2): self.admins[0].events.add(self.events[i])
+        self.admins[1].events.add(self.events[2])
+        # Test valid GET request
+        ev_uuid = self.events[0].uuid
+        response = self.client.get(f'/api/event/{ev_uuid}/admin')
+        self.assertEqual(self.events[0].tktadmin_set.count(), len(response.data))
+        self.assertEqual(response.data[0]['admin']['email'], self.admins[0].admin.email)
 
     def test_event_post_endpoints(self):
+        # /api/event
+
+        # /api/event/<uuid>/user
+
+        # /api/event/<uuid>/agent
+
         self.assertTrue(True)
