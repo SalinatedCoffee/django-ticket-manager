@@ -1,4 +1,5 @@
 #TODO: Refactor tests using self.<var> in setup method
+import uuid
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -276,7 +277,53 @@ class ViewsTestCase(TestCase):
         self.assertEqual(response.data['error'], 'User does not exist.')
 
     def test_user_post_endpoints(self):
-        self.assertTrue(True)
+        # /api/user
+        # Test valid POST request
+        tu_data = {'username': 'user_test',
+                   'email': 'user_test@domain.com',
+                   'first_name': 'test',
+                   'last_name': 'user',
+                   'password': 'user_testpass'}
+        response = self.client.post('/api/user', tu_data)
+        self.assertEqual(response.status_code, 201)
+        post_uuid = response.data['uuid']
+        expected_tktuser = TktUser.objects.get(uuid=post_uuid)
+        self.assertEqual(expected_tktuser.user.email, tu_data['email'])
+        # Test malformed POST request
+        response = self.client.post('/api/user', {'blob': 'malformed payload'})
+        self.assertEqual(response.status_code, 409)
+        # Test POST request with colliding username
+        response = self.client.post('/api/user', tu_data)
+        self.assertEqual(response.status_code, 409)
+
+        # /api/user/<str>/event
+        # Test request to invalid username
+        ev_data = {'event_uuid': str(uuid.uuid4)}
+        response = self.client.post('/api/user/no_user/event', ev_data)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['error'], 'User does not exist.')
+        # Test valid POST request
+        count_expected = self.users[0].events.count() + 1
+        ev_uuid = self.events[0].uuid
+        ev_data = {'event_uuid': str(ev_uuid)}
+        response = self.client.post(f'/api/user/{self.users[0].user.username}/event',
+                                    ev_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['uuid'], str(ev_uuid))
+        self.assertEqual(self.users[0].events.count(), count_expected)
+        # Test valid POST request with non-existant event
+        ev_data = {'event_uuid': str(uuid.uuid4)}
+        response = self.client.post(f'/api/user/{self.users[0].user.username}/event',
+                                    ev_data)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['error'], 'Event does not exist.')
+        # Test POST request with malformed payload
+        ev_data = {'uuid_event': str(self.events[0].uuid)}
+        response = self.client.post(f'/api/user/{self.users[0].user.username}/event',
+                                    ev_data)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['error'], 'Event does not exist.')
+
 
     def test_event_get_endpoints(self):
         self.assertTrue(True)

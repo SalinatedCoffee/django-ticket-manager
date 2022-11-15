@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 @api_view(['POST'])
 def user_signup(request):
+    #TODO: return different status code for different errors
     """Creates a new ``User`` which is then linked to a new ``TktUser``.
     """
     serializer = UserSerializer(data=request.data)
@@ -58,7 +59,7 @@ def user_events(request, username):
             return Response({'error': 'Event does not exist.'},
                             status.HTTP_404_NOT_FOUND)
         user.events.add(event)
-        return Response(EventSerializer(event).data)
+        return Response(EventSerializer(event).data, status.HTTP_200_OK)
 
 @api_view(['GET', 'POST'])
 def event(request):
