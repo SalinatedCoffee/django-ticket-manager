@@ -313,7 +313,7 @@ class ViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['uuid'], str(ev_uuid))
         self.assertEqual(self.users[0].events.count(), count_expected)
-        # Test valid POST request with non-existant event
+        # Test valid POST request with non-existent event
         ev_data = {'event_uuid': str(uuid.uuid4)}
         response = self.client.post(f'/api/user/{self.users[0].user.username}/event',
                                     ev_data)
@@ -340,7 +340,7 @@ class ViewsTestCase(TestCase):
         ev_uuid = self.events[0].uuid
         response = self.client.get(f'/api/event/{ev_uuid}')
         self.assertEqual(self.events[0].title, response.data['title'])
-        # Test GET request on non-existant event
+        # Test GET request on non-existent event
         response = self.client.get(f'/api/event/{uuid.uuid4()}')
         self.assertEqual(response.status_code, 404)
 
@@ -354,7 +354,7 @@ class ViewsTestCase(TestCase):
         ev_uuid = self.events[1].uuid
         response = self.client.get(f'/api/event/{ev_uuid}/user')
         self.assertEqual(self.events[1].tktuser_set.count(), len(response.data))
-        # Test GET request on non-existant event
+        # Test GET request on non-existent event
         response = self.client.get(f'/api/event/{uuid.uuid4()}/user')
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'Event does not exist.')
@@ -377,9 +377,65 @@ class ViewsTestCase(TestCase):
 
     def test_event_post_endpoints(self):
         # /api/event
+        # Test valid POST request
+        ev_data = {'title': 'POST Event',
+                   'description': 'This event was added via API requests.',
+                   'datetime': str(timezone.datetime.now(timezone.utc))}
+        response = self.client.post('/api/event', ev_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['title'], 'POST Event')
+        expected_event = Event.objects.get(uuid=response.data['uuid'])
+        self.assertEqual(response.data['title'], expected_event.title)
+        # Test POST request with malformed payload
+        ev_data = {'ev_title': 'POST Event',
+                   'ev_description': 'This event was added via API requests.',
+                   'ev_datetime': str(timezone.datetime.now(timezone.utc))}
+        response = self.client.post('/api/event', ev_data)
+        self.assertEqual(response.status_code, 400)
 
         # /api/event/<uuid>/user
+        ev_uuid = self.events[0].uuid
+        user_uuid = self.users[0].uuid
+        post_data = {'user_uuid': str(user_uuid)}
+        # Test valid POST request
+        response = self.client.post(f'/api/event/{ev_uuid}/user', post_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['user']['email'], self.users[0].user.email)
+        self.assertEqual(self.events[0].uuid,
+                         self.users[0].events.filter()[0].uuid)
+        # Test valid POST request for non-existent user
+        response = self.client.post(f'/api/event/{ev_uuid}/user',
+                                    {'user_uuid': str(uuid.uuid4)})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['error'], 'User does not exist.')
+        # Test POST request with malformed payload
+        response = self.client.post(f'/api/event/{ev_uuid}/user',
+                                    {'uuid_user': str(user_uuid)})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['error'], 'User does not exist.')
 
-        # /api/event/<uuid>/agent
-
-        self.assertTrue(True)
+        # /api/event/<uuid>/admin
+        ev_uuid = self.events[0].uuid
+        admin_uname = self.admins[0].admin.username
+        post_data = {'admin_username': admin_uname}
+        # Test valid POST request
+        response = self.client.post(f'/api/event/{ev_uuid}/admin', post_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['admin']['username'], admin_uname)
+        self.assertEqual(self.events[0].uuid,
+                         self.admins[0].events.filter()[0].uuid)
+        # Test valid POST request for non-existent admin
+        response = self.client.post(f'/api/event/{ev_uuid}/admin',
+                                    {'admin_username': 'no_admin'})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['error'], 'Admin does not exist.')
+        # Test valid POST request for existing user username
+        response = self.client.post(f'/api/event/{ev_uuid}/admin',
+                                    {'admin_username': 'user0'})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['error'], 'Admin does not exist.')
+        # Test POST request with malformed payload
+        response = self.client.post(f'/api/event/{ev_uuid}/admin',
+                                    {'username_admin': admin_uname})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['error'], 'Admin does not exist.')
