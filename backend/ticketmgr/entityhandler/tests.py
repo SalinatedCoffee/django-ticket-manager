@@ -6,7 +6,6 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .models import *
-from .views import *
 
 TEST_EV_DATETIME = timezone.datetime.now(timezone.utc)
 
