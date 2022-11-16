@@ -106,7 +106,7 @@ def event_users(request, event_uuid):
         users = TktUserSerializer(event.tktuser_set.all(), many=True)
         return Response(users.data)
 
-    elif request.methods == 'POST':
+    elif request.method == 'POST':
         try:
             user = TktUser.objects.get(uuid=request.data['user_uuid'])
         except:
@@ -148,7 +148,7 @@ def event_admins(request, event_uuid):
         admins = TktAdminSerializer(event.tktadmin_set.all(), many=True)
         return Response(admins.data, status.HTTP_200_OK)
 
-    elif request.methods == 'POST':
+    elif request.method == 'POST':
         try:
             admin = User.objects.get(username=request.data['admin_username']).tktadmin
         except:
