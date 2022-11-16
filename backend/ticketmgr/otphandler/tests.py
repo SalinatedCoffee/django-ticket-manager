@@ -104,4 +104,55 @@ class ViewsTestCase(TestCase):
         self.assertEqual(request.data['error'], 'User already registered to event.')
 
     def test_ticket_auth(self):
-        self.assertTrue(True)
+        # /api/ticket/auth
+        post_data = {'user_uuid': str(self.usr.uuid),
+                     'event_uuid': str(self.ev.uuid),
+                     'ticket_totp': '123456'}
+        # Test valid POST request with non-existent user
+        request = self.client.post('/api/ticket/auth',
+                                   {'user_uuid': str(uuid.uuid4),
+                                    'event_uuid': str(self.ev.uuid),
+                                    'ticket_totp': '123456'})
+        self.assertEqual(request.status_code, 404)
+        self.assertEqual(request.data['error'], 'User does not exist.')
+        # Test valid POST request with non-existent event
+        request = self.client.post('/api/ticket/auth',
+                                    {'user_uuid': str(self.usr.uuid),
+                                     'event_uuid': str(uuid.uuid4),
+                                     'ticket_totp': '123456'})
+        self.assertEqual(request.status_code, 404)
+        self.assertEqual(request.data['error'], 'Event does not exist.')
+        # Test valid POST request with unregistered event-user pair
+        request = self.client.post('/api/ticket/auth', post_data)
+        self.assertEqual(request.status_code, 400)
+        self.assertEqual(request.data['error'], 'User is not registered to event.')
+        # Test POST request with malformed payload
+        self.usr.events.add(self.ev)
+        request = self.client.post('/api/ticket/auth',
+                                   {'uuid_user': str(self.usr.uuid),
+                                    'event_uuid': str(self.ev.uuid),
+                                    'ticket_totp': '123456'})
+        self.assertEqual(request.status_code, 404)
+        self.assertEqual(request.data['error'], 'User does not exist.')
+        post_data['ticket_totp'] = ''
+        request = self.client.post('/api/ticket/auth', post_data)
+        self.assertEqual(request.status_code, 400)
+        self.assertEqual(request.data['error'], 'TOTP code was not supplied.')
+        request = self.client.post('/api/ticket/auth',
+                                    {'user_uuid': str(self.usr.uuid),
+                                     'event_uuid': str(self.ev.uuid)})
+        self.assertEqual(request.status_code, 400)
+        self.assertEqual(request.data['error'], 'TOTP code was not supplied.')
+        # Test valid POST request with correct TOTP
+        ticket_secret = services.generate_ticket_secret(self.usr, self.ev)
+        post_data = {'user_uuid': str(self.usr.uuid),
+                     'event_uuid': str(self.ev.uuid),
+                     'ticket_totp': services.generate_totp(ticket_secret)}
+        request = self.client.post('/api/ticket/auth', post_data)
+        self.assertEqual(request.status_code, 200)
+        self.assertTrue(request.data['ticket_is_valid'])
+        # Test valid POST request with incorrect TOTP
+        post_data['ticket_totp'] = post_data['ticket_totp'][:5].zfill(6)
+        request = self.client.post('/api/ticket/auth', post_data)
+        self.assertEqual(request.status_code, 200)
+        self.assertFalse(request.data['ticket_is_valid'])
