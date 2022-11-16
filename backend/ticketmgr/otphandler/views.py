@@ -12,7 +12,7 @@ def ticket_new(request):
     On success, sends a JSON response with the ticket-unique secret.
     JSON format: {'user_uuid': <str>, 'event_uuid': <str>}
     """
-    if request.header == 'POST':
+    if request.method == 'POST':
         try:
             user = TktUser.objects.get(uuid=request.data['user_uuid'])
         except:
