@@ -134,10 +134,6 @@ class ViewsTestCase(TestCase):
                                     'ticket_totp': '123456'})
         self.assertEqual(request.status_code, 404)
         self.assertEqual(request.data['error'], 'User does not exist.')
-        post_data['ticket_totp'] = ''
-        request = self.client.post('/api/ticket/auth', post_data)
-        self.assertEqual(request.status_code, 400)
-        self.assertEqual(request.data['error'], 'TOTP code was not supplied.')
         request = self.client.post('/api/ticket/auth',
                                     {'user_uuid': str(self.usr.uuid),
                                      'event_uuid': str(self.ev.uuid)})
