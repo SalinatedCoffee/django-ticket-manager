@@ -2,7 +2,7 @@
 # Random junk
 backend/ticketmgr/ignored_files
 # venv
-backend/ticketmgr/ticketmgr
+backend/ticketmgr/venv
 
 ### Python-related entries
 # Byte-compiled / optimized / DLL files
