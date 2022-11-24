@@ -1,5 +1,8 @@
 #TODO: Consider catching multiple exceptions and returning appropriate
-#HTTP response codes
+#      HTTP response codes
+#TODO: Check disclosed information through serialized models with nested relationships
+#      (do endpoints accidentally show other user info to user through event endpoints, etc)
+#TODO: Support DELETE methods for appropriate endpoints (unregister entities from events, etc)
 from .serializers import *
 from rest_framework import status
 from rest_framework.decorators import api_view
