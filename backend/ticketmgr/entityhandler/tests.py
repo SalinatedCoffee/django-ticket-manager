@@ -479,12 +479,22 @@ class EndpointAuthorizationTestCase(TestCase):
                                         {'username': 'agent1', 'password': 'agent1pass'})
         self.agt_client.credentials(HTTP_AUTHORIZATION='Bearer' + response.data['access'])
     
-    def test_authorization_behavior(self):
-        # user info viewable by self if req from tktuser
-        # user event post only possible by admin
-        # event post only possible by admin
-        # admin event post only possible by admin
-        # admin event get only possible by admin, agent
-        # agent event post only possible by admin
-        # agent event get only possible by admin
-        pass
+    def test_user_get_endpoints(self):
+        # only admins and agents can view any user info
+        # users can only view own info
+        raise NotImplementedError
+
+    def test_user_post_endpoints(self):
+        # only admins can post event to user
+        raise NotImplementedError
+
+    def test_event_get_endpoints(self):
+        # anyone can view event details
+        # only admins and agents can view event admins and users
+        # only admins can view event agents
+        raise NotImplementedError
+
+    def test_event_post_endpoints(self):
+        # only admins can create events
+        # only admins can register entities to event roster
+        raise NotImplementedError
