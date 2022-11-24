@@ -167,7 +167,7 @@ class ModelRelationshipTestCase(TestCase):
         agents[2].delete()
         self.assertEqual(evs[1].tktagent_set.count(), 0)
 
-class CheckRegistrationTestCase(TestCase):
+class RegistrationCheckTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
         evs = []
@@ -221,17 +221,17 @@ class CheckRegistrationTestCase(TestCase):
         self.assertTrue(user1.registered_to_event(ev1))
         self.assertFalse(user2.registered_to_event(ev2))
 
-class ViewsTestCase(TestCase):
+class EndpointLogicTestCase(TestCase):
     def setUp(self):
         SU_UNAME = 'debug_admin'
         SU_PWORD = 'debug_adminpass'
-        self.client = APIClient()
+        self.su_client = APIClient()
         User.objects.create_superuser(SU_UNAME, password=SU_PWORD)
-        response = self.client.post('/api/token/',
+        response = self.su_client.post('/api/token/',
                                     {'username': SU_UNAME,
                                      'password': SU_PWORD})
         token = response.data['access']
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
+        self.su_client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
         self.users = []
         self.events = []
         self.admins = []
@@ -267,27 +267,27 @@ class ViewsTestCase(TestCase):
     def test_user_get_endpoints(self):
         # /api/user/<str>
         # Test valid TktUser request for existing user
-        response = self.client.get('/api/user/user1')
+        response = self.su_client.get('/api/user/user1')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['user']['first_name'], 'John1')
         # Test valid TktUser request for non-existing user
-        response = self.client.get('/api/user/no_user')
+        response = self.su_client.get('/api/user/no_user')
         self.assertEqual(response.status_code, 404)
         # Test correct handling of non-TktUser request attempts
-        response = self.client.get('/api/user/admin1')
+        response = self.su_client.get('/api/user/admin1')
         self.assertEqual(response.status_code, 404)
         # Test correct handling of requests with unsupported methods
-        response = self.client.post('/api/user/user1', {'name': 'payload'})
+        response = self.su_client.post('/api/user/user1', {'name': 'payload'})
         self.assertEqual(response.status_code, 405)
 
         # /api/user/<str>/event
         for i in range(3): self.users[0].events.add(self.events[i])
         self.users[1].events.add(self.events[0])
         # Test valid Event request for existing TktUser
-        response = self.client.get(f'/api/user/{self.users[0].user.username}/event')
+        response = self.su_client.get(f'/api/user/{self.users[0].user.username}/event')
         self.assertEqual(len(response.data), 3)
         # Test valid Event request for non-existing user
-        response = self.client.get('/api/user/no_user/event')
+        response = self.su_client.get('/api/user/no_user/event')
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'User does not exist.')
 
@@ -299,42 +299,42 @@ class ViewsTestCase(TestCase):
                    'first_name': 'test',
                    'last_name': 'user',
                    'password': 'user_testpass'}
-        response = self.client.post('/api/user', tu_data)
+        response = self.su_client.post('/api/user', tu_data)
         self.assertEqual(response.status_code, 201)
         post_uuid = response.data['uuid']
         expected_tktuser = TktUser.objects.get(uuid=post_uuid)
         self.assertEqual(expected_tktuser.user.email, tu_data['email'])
         # Test malformed POST request
-        response = self.client.post('/api/user', {'blob': 'malformed payload'})
+        response = self.su_client.post('/api/user', {'blob': 'malformed payload'})
         self.assertEqual(response.status_code, 409)
         # Test POST request with colliding username
-        response = self.client.post('/api/user', tu_data)
+        response = self.su_client.post('/api/user', tu_data)
         self.assertEqual(response.status_code, 409)
 
         # /api/user/<str>/event
         # Test request to invalid username
         ev_data = {'event_uuid': str(uuid.uuid4)}
-        response = self.client.post('/api/user/no_user/event', ev_data)
+        response = self.su_client.post('/api/user/no_user/event', ev_data)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'User does not exist.')
         # Test valid POST request
         count_expected = self.users[0].events.count() + 1
         ev_uuid = self.events[0].uuid
         ev_data = {'event_uuid': str(ev_uuid)}
-        response = self.client.post(f'/api/user/{self.users[0].user.username}/event',
+        response = self.su_client.post(f'/api/user/{self.users[0].user.username}/event',
                                     ev_data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['uuid'], str(ev_uuid))
         self.assertEqual(self.users[0].events.count(), count_expected)
         # Test valid POST request with non-existent event
         ev_data = {'event_uuid': str(uuid.uuid4)}
-        response = self.client.post(f'/api/user/{self.users[0].user.username}/event',
+        response = self.su_client.post(f'/api/user/{self.users[0].user.username}/event',
                                     ev_data)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'Event does not exist.')
         # Test POST request with malformed payload
         ev_data = {'uuid_event': str(self.events[0].uuid)}
-        response = self.client.post(f'/api/user/{self.users[0].user.username}/event',
+        response = self.su_client.post(f'/api/user/{self.users[0].user.username}/event',
                                     ev_data)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'Event does not exist.')
@@ -342,7 +342,7 @@ class ViewsTestCase(TestCase):
     def test_event_get_endpoints(self):
         # /api/event
         # Test valid GET request
-        response = self.client.get('/api/event')
+        response = self.su_client.get('/api/event')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), len(self.events))
         ev = Event.objects.get(uuid=response.data[0]['uuid'])
@@ -351,31 +351,31 @@ class ViewsTestCase(TestCase):
         # /api/event/<uuid>
         # Test valid GET request
         ev_uuid = self.events[0].uuid
-        response = self.client.get(f'/api/event/{ev_uuid}')
+        response = self.su_client.get(f'/api/event/{ev_uuid}')
         self.assertEqual(self.events[0].title, response.data['title'])
         # Test GET request on non-existent event
-        response = self.client.get(f'/api/event/{uuid.uuid4()}')
+        response = self.su_client.get(f'/api/event/{uuid.uuid4()}')
         self.assertEqual(response.status_code, 404)
 
         # /api/event/<uuid>/user
         for i in range(3): self.users[i].events.add(self.events[0])
         # Test valid GET request on event with registered users
         ev_uuid = self.events[0].uuid
-        response = self.client.get(f'/api/event/{ev_uuid}/user')
+        response = self.su_client.get(f'/api/event/{ev_uuid}/user')
         self.assertEqual(len(self.events), len(response.data))
         # Test valid GET request on event with no registered users
         ev_uuid = self.events[1].uuid
-        response = self.client.get(f'/api/event/{ev_uuid}/user')
+        response = self.su_client.get(f'/api/event/{ev_uuid}/user')
         self.assertEqual(self.events[1].tktuser_set.count(), len(response.data))
         # Test GET request on non-existent event
-        response = self.client.get(f'/api/event/{uuid.uuid4()}/user')
+        response = self.su_client.get(f'/api/event/{uuid.uuid4()}/user')
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'Event does not exist.')
 
         # /api/event/<uuid>/agent
         # Test valid GET request
         ev_uuid = self.events[0].uuid
-        response = self.client.get(f'/api/event/{ev_uuid}/agent')
+        response = self.su_client.get(f'/api/event/{ev_uuid}/agent')
         self.assertEqual(response.data[0]['event']['uuid'], str(ev_uuid))
         self.assertEqual(response.data[0]['agent']['email'], self.agents[0].agent.email)
 
@@ -384,7 +384,7 @@ class ViewsTestCase(TestCase):
         self.admins[1].events.add(self.events[2])
         # Test valid GET request
         ev_uuid = self.events[0].uuid
-        response = self.client.get(f'/api/event/{ev_uuid}/admin')
+        response = self.su_client.get(f'/api/event/{ev_uuid}/admin')
         self.assertEqual(self.events[0].tktadmin_set.count(), len(response.data))
         self.assertEqual(response.data[0]['admin']['email'], self.admins[0].admin.email)
 
@@ -394,7 +394,7 @@ class ViewsTestCase(TestCase):
         ev_data = {'title': 'POST Event',
                    'description': 'This event was added via API requests.',
                    'datetime': str(timezone.datetime.now(timezone.utc))}
-        response = self.client.post('/api/event', ev_data)
+        response = self.su_client.post('/api/event', ev_data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['title'], 'POST Event')
         expected_event = Event.objects.get(uuid=response.data['uuid'])
@@ -403,7 +403,7 @@ class ViewsTestCase(TestCase):
         ev_data = {'ev_title': 'POST Event',
                    'ev_description': 'This event was added via API requests.',
                    'ev_datetime': str(timezone.datetime.now(timezone.utc))}
-        response = self.client.post('/api/event', ev_data)
+        response = self.su_client.post('/api/event', ev_data)
         self.assertEqual(response.status_code, 400)
 
         # /api/event/<uuid>/user
@@ -411,18 +411,18 @@ class ViewsTestCase(TestCase):
         user_uuid = self.users[0].uuid
         post_data = {'user_uuid': str(user_uuid)}
         # Test valid POST request
-        response = self.client.post(f'/api/event/{ev_uuid}/user', post_data)
+        response = self.su_client.post(f'/api/event/{ev_uuid}/user', post_data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['user']['email'], self.users[0].user.email)
         self.assertEqual(self.events[0].uuid,
                          self.users[0].events.filter()[0].uuid)
         # Test valid POST request for non-existent user
-        response = self.client.post(f'/api/event/{ev_uuid}/user',
+        response = self.su_client.post(f'/api/event/{ev_uuid}/user',
                                     {'user_uuid': str(uuid.uuid4)})
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'User does not exist.')
         # Test POST request with malformed payload
-        response = self.client.post(f'/api/event/{ev_uuid}/user',
+        response = self.su_client.post(f'/api/event/{ev_uuid}/user',
                                     {'uuid_user': str(user_uuid)})
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'User does not exist.')
@@ -432,23 +432,23 @@ class ViewsTestCase(TestCase):
         admin_uname = self.admins[0].admin.username
         post_data = {'admin_username': admin_uname}
         # Test valid POST request
-        response = self.client.post(f'/api/event/{ev_uuid}/admin', post_data)
+        response = self.su_client.post(f'/api/event/{ev_uuid}/admin', post_data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['admin']['username'], admin_uname)
         self.assertEqual(self.events[0].uuid,
                          self.admins[0].events.filter()[0].uuid)
         # Test valid POST request for non-existent admin
-        response = self.client.post(f'/api/event/{ev_uuid}/admin',
+        response = self.su_client.post(f'/api/event/{ev_uuid}/admin',
                                     {'admin_username': 'no_admin'})
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'Admin does not exist.')
         # Test valid POST request for existing user username
-        response = self.client.post(f'/api/event/{ev_uuid}/admin',
+        response = self.su_client.post(f'/api/event/{ev_uuid}/admin',
                                     {'admin_username': 'user0'})
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'Admin does not exist.')
         # Test POST request with malformed payload
-        response = self.client.post(f'/api/event/{ev_uuid}/admin',
+        response = self.su_client.post(f'/api/event/{ev_uuid}/admin',
                                     {'username_admin': admin_uname})
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'Admin does not exist.')
