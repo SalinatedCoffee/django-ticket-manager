@@ -36,7 +36,7 @@ def user_info(request, username):
         # Users can only access own info
         # TODO: Consider adding event enrollment checks so admins and agents
         #       can only access users registered to assigned events
-        if hasattr(request.user, 'tktuser'):
+        if not request.user.is_superuser and hasattr(request.user, 'tktuser'):
             if request.user.tktuser.uuid != user.uuid:
                 return Response(status=status.HTTP_403_FORBIDDEN)
         
@@ -65,8 +65,10 @@ def user_events(request, username):
         return Response(serializer.data, status.HTTP_200_OK)
     
     elif request.method == 'POST':
-        if not hasattr(request.user, 'tktadmin'):
-            return Response({'error': 'Only admin accounts can create events.'},
+        # TODO: Admins should only be able to register users to events that
+        #       it is responsible for
+        if not request.user.is_superuser and not hasattr(request.user, 'tktadmin'):
+            return Response({'error': 'Only admin accounts can enroll users to events.'},
                             status.HTTP_403_FORBIDDEN)
         try:
             event = Event.objects.get(uuid=request.data['event_uuid'])
