@@ -6,12 +6,14 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes
+
 @api_view(['POST'])
 def user_signup(request):
     """Creates a new ``User`` which is then linked to a new ``TktUser``.
     """
     serializer = UserSerializer(data=request.data)
-
     if serializer.is_valid():
         user = serializer.save()
         tktuser = TktUser.objects.create(user=user)
@@ -20,6 +22,7 @@ def user_signup(request):
     return Response(serializer.errors, status.HTTP_409_CONFLICT)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def user_info(request, username):
     """Returns a JSON representation of a ``TktUser`` with ``username``.
     """
@@ -28,10 +31,20 @@ def user_info(request, username):
             user = User.objects.get(username=username).tktuser
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+        # All admins and agents can access user info
+        # Users can only access own info
+        # TODO: Consider adding event enrollment checks so admins and agents
+        #       can only access users registered to assigned events
+        if hasattr(request.user, 'tktuser'):
+            if request.user.tktuser.uuid != user.uuid:
+                return Response(status=status.HTTP_403_FORBIDDEN)
+        
         serializer = TktUserSerializer(user)
         return Response(serializer.data, status.HTTP_200_OK)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def user_events(request, username):
     """First queries a ``TktUser`` with ``username``. Then on
     ``GET``: Returns a JSON representation of all ``Event`` objects referenced by
@@ -47,11 +60,14 @@ def user_events(request, username):
                         status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        # TODO: Define separate serializers for list/detail view
+        # TODO: Consider defining separate serializers for list/detail view
         serializer = EventSerializer(list(user.events.all()), many=True)
         return Response(serializer.data, status.HTTP_200_OK)
     
     elif request.method == 'POST':
+        if not hasattr(request.user, 'tktadmin'):
+            return Response({'error': 'Only admin accounts can create events.'},
+                            status.HTTP_403_FORBIDDEN)
         try:
             event = Event.objects.get(uuid=request.data['event_uuid'])
         except:
@@ -61,6 +77,7 @@ def user_events(request, username):
         return Response(EventSerializer(event).data, status.HTTP_200_OK)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def event(request):
     """``GET``: Returns a JSON representation of all ``Event`` objects.
     ``POST``: Creates a new ``Event``.
@@ -77,6 +94,7 @@ def event(request):
         return Response(serial.errors, status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def event_info(request, event_uuid):
     """Returns a JSON representation of an ``Event`` with ``event_uuid``.
     """
@@ -88,6 +106,7 @@ def event_info(request, event_uuid):
         return Response(event.data, status.HTTP_200_OK)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def event_users(request, event_uuid):
     """First queries an ``Event`` with ``event_uuid``. Then on
     ``GET``: Returns a JSON representation of all ``TktUser``s that reference
@@ -116,6 +135,7 @@ def event_users(request, event_uuid):
         return Response(TktUserSerializer(user).data, status.HTTP_200_OK)
         
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def event_agents(request, event_uuid):
     """Returns a JSON representation of all ``TktAgent``s that reference
     an ``Event`` with ``event_uuid``.
@@ -130,6 +150,7 @@ def event_agents(request, event_uuid):
         return Response(agents.data, status.HTTP_200_OK)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def event_admins(request, event_uuid):
     """First queries an ``Event`` with ``event_uuid``. Then on
     ``GET``: Returns a JSON representation of all ``TktAdmin``s that reference
