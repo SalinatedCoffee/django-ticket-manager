@@ -452,3 +452,39 @@ class EndpointLogicTestCase(TestCase):
                                     {'username_admin': admin_uname})
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'Admin does not exist.')
+
+class EndpointAuthorizationTestCase(TestCase):
+    def setUp(self):
+        self.user = TktUser.objects.create(
+                        user=User.objects.create_user('user1', password='user1pass'))
+        self.admin = TktAdmin.objects.create(
+                        admin=User.objects.create_user('admin1', password='admin1pass'))
+        self.event = Event.objects.create(
+                        title="Event 1",
+                        description="This is the first event.",
+                        datetime=timezone.datetime.now(timezone.utc))
+        self.agent = TktAgent.objects.create(
+                        agent=User.objects.create_user('agent1', password='agent1pass'),
+                        event=self.event)
+        self.usr_client = APIClient()
+        response = self.usr_client.post('/api/token/',
+                                        {'username': 'user1', 'password': 'user1pass'})
+        self.usr_client.credentials(HTTP_AUTHORIZATION='Bearer ' + response.data['access'])
+        self.amn_client = APIClient()
+        response = self.amn_client.post('/api/token',
+                                        {'username': 'admin1', 'password': 'admin1pass'})
+        self.amn_client.credentials(HTTP_AUTHORIZATION='Bearer ' + response.data['access'])
+        self.agt_client = APIClient()
+        response = self.agt_client.post('/api/token.',
+                                        {'username': 'agent1', 'password': 'agent1pass'})
+        self.agt_client.credentials(HTTP_AUTHORIZATION='Bearer' + response.data['access'])
+    
+    def test_authorization_behavior(self):
+        # user info viewable by self if req from tktuser
+        # user event post only possible by admin
+        # event post only possible by admin
+        # admin event post only possible by admin
+        # admin event get only possible by admin, agent
+        # agent event post only possible by admin
+        # agent event get only possible by admin
+        pass
