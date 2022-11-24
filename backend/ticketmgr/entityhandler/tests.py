@@ -173,6 +173,7 @@ class CheckRegistrationTestCase(TestCase):
         evs = []
         users = []
         agents = []
+        admins = []
         for i in range(1, 3):
             Event.objects.create(title=f"Event {i}",
                                  description=f"This is event number {i}.",
@@ -181,6 +182,11 @@ class CheckRegistrationTestCase(TestCase):
                 TktUser.objects.create(user=User.objects.create_user(f'user{i}',
                                             f'user{i}@domain.com',
                                             f'password{i}')))
+            admins.append(
+                TktAdmin.objects.create(admin=User.objects.create_user(f'admin{i}',
+                                              f'admin{i}@domain.com',
+                                              f'password{i}'))
+            )
         evs.append(Event.objects.get(title="Event 1"))
         evs.append(Event.objects.get(title="Event 2"))
         for i in range(1, 3):
@@ -217,7 +223,15 @@ class CheckRegistrationTestCase(TestCase):
 
 class ViewsTestCase(TestCase):
     def setUp(self):
+        SU_UNAME = 'debug_admin'
+        SU_PWORD = 'debug_adminpass'
         self.client = APIClient()
+        User.objects.create_superuser(SU_UNAME, password=SU_PWORD)
+        response = self.client.post('/api/token/',
+                                    {'username': SU_UNAME,
+                                     'password': SU_PWORD})
+        token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
         self.users = []
         self.events = []
         self.admins = []
