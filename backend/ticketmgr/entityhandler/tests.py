@@ -454,6 +454,26 @@ class EndpointLogicTestCase(TestCase):
         self.assertEqual(response.data['error'], 'Admin does not exist.')
 
 class EndpointAuthorizationTestCase(TestCase):
+    def util_auth_apiclient(self, username: str, password: str) -> APIClient:
+        """Utility function that generates an ``APIClient`` with credentials
+        required for token authentication.
+
+        Args:
+            username (``str``): Username of the user to authenticate as.
+            password (``str``): Password of the user to authenticate as.
+
+        Returns:
+            ``APIClient``: ``APIClient`` object with access token authenticating
+            the user with provided credentials.
+        """
+        client = APIClient()
+        response = client.post('/api/token/',
+                               {'username': username, 'password': password})
+        if response.status_code != 200:
+            raise ValueError('failed to authenticate with provided credentials')
+        client.credentials(HTTP_AUTHORIZATION='Bearer '+response.data['access'])
+        return client
+
     def setUp(self):
         self.user = TktUser.objects.create(
                         user=User.objects.create_user('user1', password='user1pass'))
@@ -466,35 +486,93 @@ class EndpointAuthorizationTestCase(TestCase):
         self.agent = TktAgent.objects.create(
                         agent=User.objects.create_user('agent1', password='agent1pass'),
                         event=self.event)
-        self.usr_client = APIClient()
-        response = self.usr_client.post('/api/token/',
-                                        {'username': 'user1', 'password': 'user1pass'})
-        self.usr_client.credentials(HTTP_AUTHORIZATION='Bearer ' + response.data['access'])
-        self.amn_client = APIClient()
-        response = self.amn_client.post('/api/token',
-                                        {'username': 'admin1', 'password': 'admin1pass'})
-        self.amn_client.credentials(HTTP_AUTHORIZATION='Bearer ' + response.data['access'])
-        self.agt_client = APIClient()
-        response = self.agt_client.post('/api/token.',
-                                        {'username': 'agent1', 'password': 'agent1pass'})
-        self.agt_client.credentials(HTTP_AUTHORIZATION='Bearer' + response.data['access'])
+        self.usr_client = self.util_auth_apiclient('user1', 'user1pass')
+        self.amn_client = self.util_auth_apiclient('admin1', 'admin1pass')
+        self.agt_client = self.util_auth_apiclient('agent1', 'agent1pass')
     
     def test_user_get_endpoints(self):
-        # only admins and agents can view any user info
-        # users can only view own info
-        raise NotImplementedError
+        usr2 = TktUser.objects.create(user=User.objects.create_user('user2',
+                                                                    password='user2pass'))
+        usr2_client = self.util_auth_apiclient('user2', 'user2pass')
+        # Test user info access as other user
+        response = usr2_client.get('/api/user/user1')
+        self.assertEqual(response.status_code, 403)
+        # Test user info access as self, admin, agent
+        response = self.usr_client.get('/api/user/user1')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['user']['username'], 'user1')
+        response = self.amn_client.get('/api/user/user1')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['user']['username'], 'user1')
+        response = self.agt_client.get('/api/user/user1')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['user']['username'], 'user1')
 
     def test_user_post_endpoints(self):
+        payload = {'event_uuid': str(self.event.uuid)}
         # only admins can post event to user
-        raise NotImplementedError
+        # Test event registration by user, agent
+        response = self.usr_client.post(f'/api/user/{self.user.user.username}/event', payload)
+        self.assertEqual(response.status_code, 403)
+        response = self.agt_client.post(f'/api/user/{self.user.user.username}/event', payload)
+        self.assertEqual(response.status_code, 403)
+        # Test event registration by admin
+        response = self.amn_client.post(f'/api/user/{self.user.user.username}/event', payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['uuid'], str(self.event.uuid))
 
     def test_event_get_endpoints(self):
-        # anyone can view event details
-        # only admins and agents can view event admins and users
-        # only admins can view event agents
-        raise NotImplementedError
+        # Test event list GET request by user, agent, admin
+        response = self.usr_client.get('/api/event')
+        self.assertEqual(response.status_code, 200)
+        response = self.agt_client.get('/api/event')
+        self.assertEqual(response.status_code, 200)
+        response = self.amn_client.get('/api/event')
+        self.assertEqual(response.status_code, 200)
+        ev_uri = f'/api/event/{str(self.event.uuid)}'
+        # Test event detail GET request by user, agent, admin
+        response = self.usr_client.get(ev_uri)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['title'], self.event.title)
+        response = self.agt_client.get(ev_uri)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['title'], self.event.title)
+        response = self.amn_client.get(ev_uri)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['title'], self.event.title)
+        # Test event admin and user GET request by user
+        response = self.usr_client.get(f'{ev_uri}/user')
+        self.assertEqual(response.status_code, 403)
+        response = self.usr_client.get(f'{ev_uri}/admin')
+        self.assertEqual(response.status_code, 403)
+        # Test event admin and user GET request by agent, admin
+        response = self.agt_client.get(f'{ev_uri}/user')
+        self.assertEqual(response.status_code, 200)
+        response = self.amn_client.get(f'{ev_uri}/user')
+        self.assertEqual(response.status_code, 200)
+        response = self.agt_client.get(f'{ev_uri}/admin')
+        self.assertEqual(response.status_code, 200)
+        response = self.amn_client.get(f'{ev_uri}/admin')
+        self.assertEqual(response.status_code, 200)
+        # Test event agent GET request by user, agent
+        response = self.usr_client.get(f'{ev_uri}/agent')
+        self.assertEqual(response.status_code, 403)
+        response = self.agt_client.get(f'{ev_uri}/agent')
+        self.assertEqual(response.status_code, 403)
+        # Test event agent GET request by admin
+        response = self.amn_client.get(f'{ev_uri}/admin')
+        self.assertEqual(response.status_code, 200)
 
     def test_event_post_endpoints(self):
-        # only admins can create events
-        # only admins can register entities to event roster
-        raise NotImplementedError
+        ev_data = {'title': 'POST Event',
+                   'description': 'This event was created by a POST api request',
+                   'datetime': str(timezone.datetime.now(timezone.utc))}
+        # Test event creation by user, agent
+        response = self.usr_client.post('/api/event', ev_data)
+        self.assertEqual(response.status_code, 403)
+        response = self.agt_client.post('/api/event', ev_data)
+        self.assertEqual(response.status_code, 403)
+        # Test event creation by admin
+        response = self.amn_client.post('/api/event', ev_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['title'], ev_data['title'])

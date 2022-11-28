@@ -54,9 +54,6 @@ def _custom_hmac(secret: bytes, message: bytes) -> bytes:
         secret (bytes): The secret key portion of the input.
         message (bytes): The message portion of the input.
 
-    Raises:
-        ValueError: Malformed parameter(s) were supplied to the function.
-
     Returns:
         bytes: Computed HMAC hash given secret and message.
     """
