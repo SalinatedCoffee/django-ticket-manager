@@ -576,3 +576,23 @@ class EndpointAuthorizationTestCase(TestCase):
         response = self.amn_client.post('/api/event', ev_data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['title'], ev_data['title'])
+        payload = {'user_uuid': str(self.user.uuid)}
+        ev_uri = f'/api/event/{self.event.uuid}'
+        # Test user event registration by user, agent
+        response = self.usr_client.post(f'{ev_uri}/user', payload)
+        self.assertEqual(response.status_code, 403)
+        response = self.agt_client.post(f'{ev_uri}/user', payload)
+        self.assertEqual(response.status_code, 403)
+        # Test user event registration by admin
+        response = self.amn_client.post(f'{ev_uri}/user', payload)
+        self.assertEqual(response.status_code, 200)
+        payload = {'admin_username': self.admin.admin.username}
+        # Test admin event registration by user, agent
+        response = self.usr_client.post(f'{ev_uri}/admin', payload)
+        self.assertEqual(response.status_code, 403)
+        response = self.agt_client.post(f'{ev_uri}/admin', payload)
+        self.assertEqual(response.status_code, 403)
+        # Test admin event registration by admin
+        response = self.amn_client.post(f'{ev_uri}/admin', payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['admin']['username'], self.admin.admin.username)
