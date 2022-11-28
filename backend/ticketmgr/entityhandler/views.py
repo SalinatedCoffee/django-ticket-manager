@@ -3,6 +3,8 @@
 #TODO: Check disclosed information through serialized models with nested relationships
 #      (do endpoints accidentally show other user info to user through event endpoints, etc)
 #TODO: Support DELETE methods for appropriate endpoints (unregister entities from events, etc)
+#TODO: Remove redundant logic from endpoints
+#      (eg. users can be registered via /user/<username>/event AND /event/<ev_uuid>/user)
 from .serializers import *
 from rest_framework import status
 from rest_framework.decorators import api_view
