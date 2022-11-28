@@ -7,9 +7,9 @@ from rest_framework.response import Response
 
 @api_view(['POST'])
 def ticket_new(request):
-    """Adds a reference to an ``Event`` with ``event_uuid`` to a ``TktUser``
-    with ``user_uuid``.
-    On success, sends a JSON response with the ticket-unique secret.
+    """Checks whether a ``TktUser`` with ``user_uuid`` is registered to
+    an ``Event`` with ``event_uuid``.
+    If registered, sends a JSON response with the ticket-unique secret.
     JSON format: {'user_uuid': <str>, 'event_uuid': <str>}
     """
     if request.method == 'POST':
@@ -25,10 +25,9 @@ def ticket_new(request):
             return Response({'error': 'Event does not exist.'},
                             status.HTTP_404_NOT_FOUND)
 
-        if event.user_is_registered(user):
-            return Response({'error': 'User already registered to event.'},
-                            status.HTTP_409_CONFLICT)
-        user.events.add(event)
+        if not event.user_is_registered(user):
+            return Response({'error': 'User not registered to event.'},
+                            status.HTTP_400_BAD_REQUEST)
         tkt_secret = services.generate_ticket_secret(user, event)
         return Response({'success': tkt_secret},
                         status.HTTP_200_OK)
