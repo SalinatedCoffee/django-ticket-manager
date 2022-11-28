@@ -22,7 +22,7 @@ def user_signup(request):
         tktuser = TktUser.objects.create(user=user)
         return Response(TktUserSerializer(tktuser).data,
                         status.HTTP_201_CREATED)
-    return Response(serializer.errors, status.HTTP_409_CONFLICT)
+    return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -92,6 +92,8 @@ def event(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
+        if not request.user.is_superuser and not hasattr(request.user, 'tktadmin'):
+            return Response(status=status.HTTP_403_FORBIDDEN)
         serial = EventSerializer(data=request.data)
         if serial.is_valid():
             serial.save()
@@ -127,10 +129,14 @@ def event_users(request, event_uuid):
                         status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
+        if not request.user.is_superuser and hasattr(request.user, 'tktuser'):
+            return Response(status=status.HTTP_403_FORBIDDEN)
         users = TktUserSerializer(event.tktuser_set.all(), many=True)
         return Response(users.data)
 
     elif request.method == 'POST':
+        if not request.user.is_superuser and not hasattr(request.user, 'tktadmin'):
+            return Response(status=status.HTTP_403_FORBIDDEN)
         try:
             user = TktUser.objects.get(uuid=request.data['user_uuid'])
         except:
@@ -146,6 +152,8 @@ def event_agents(request, event_uuid):
     an ``Event`` with ``event_uuid``.
     """
     if request.method == 'GET':
+        if not request.user.is_superuser and not hasattr(request.user, 'tktadmin'):
+            return Response(status=status.HTTP_403_FORBIDDEN)
         try:
             event = Event.objects.get(uuid=event_uuid)
         except:
@@ -171,10 +179,14 @@ def event_admins(request, event_uuid):
                         status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
+        if not request.user.is_superuser and hasattr(request.user, 'tktuser'):
+            return Response(status=status.HTTP_403_FORBIDDEN)
         admins = TktAdminSerializer(event.tktadmin_set.all(), many=True)
         return Response(admins.data, status.HTTP_200_OK)
 
     elif request.method == 'POST':
+        if not request.user.is_superuser and not hasattr(request.user, 'tktadmin'):
+            return Response(status=status.HTTP_403_FORBIDDEN)
         try:
             admin = User.objects.get(username=request.data['admin_username']).tktadmin
         except:
