@@ -61,7 +61,11 @@ class ServicesTestCase(TestCase):
 
 class ViewsTestCase(TestCase):
     def setUp(self):
+        User.objects.create_superuser('superuser', password='supass')
         self.client = APIClient()
+        response = self.client.post('/api/token/',
+                                    {'username': 'superuser', 'password': 'supass'})
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer '+response.data['access'])
         self.ev = Event.objects.create(title="Event 1",
                                   description="This is the first event.",
                                   datetime=timezone.datetime.now(timezone.utc))
@@ -94,14 +98,15 @@ class ViewsTestCase(TestCase):
                                     'event_uuid': str(self.ev.uuid)})
         self.assertEqual(request.status_code, 404)
         self.assertEqual(request.data['error'], 'User does not exist.')
-        # Test valid POST request
+        # Test POST request with unregistered event-user pair
+        request = self.client.post('/api/ticket/new', post_data)
+        self.assertEqual(request.status_code, 400)
+        self.assertEqual(request.data['error'], 'User not registered to event.')
+        self.usr.events.add(self.ev)
+        # Test valid POST request with registered event-user pair
         request = self.client.post('/api/ticket/new', post_data)
         self.assertEqual(request.status_code, 200)
         self.assertEqual(len(request.data['success']), 20)
-        # Test POST request with already registered event-user pair
-        request = self.client.post('/api/ticket/new', post_data)
-        self.assertEqual(request.status_code, 409)
-        self.assertEqual(request.data['error'], 'User already registered to event.')
 
     def test_ticket_auth(self):
         # /api/ticket/auth
