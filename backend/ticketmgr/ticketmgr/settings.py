@@ -39,6 +39,7 @@ ALLOWED_HOSTS = [os.getenv("ALLOWED_HOST_1")]
 
 INSTALLED_APPS = [
     'entityhandler.apps.EntityhandlerConfig',
+    'otphandler.apps.OtphandlerConfig',
     'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -47,12 +48,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ]
-}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -63,6 +58,25 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    """
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    """
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ]
+}
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+
+SESSION_COOKIE_HTTPONLY = False if len(os.getenv("SESSION_COOKIE_HTTPONLY")) == 0 else True
+
+SESSION_COOKIE_SECURE = False if len(os.getenv("SESSION_COOKIE_SECURE")) == 0 else True
+
+SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE")
 
 ROOT_URLCONF = 'ticketmgr.urls'
 
