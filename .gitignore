@@ -1,6 +1,7 @@
 ### Project ignores
 # Random junk
 backend/ticketmgr/ignored_files
+cookies.txt
 # venv
 backend/ticketmgr/venv
 
