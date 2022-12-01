@@ -9,16 +9,6 @@ from .models import *
 
 TEST_EV_DATETIME = timezone.datetime.now(timezone.utc)
 
-# TODO: Refactor tests to use cookie-based session auth
-class TestTestCase(TestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.client.login(username='debug_admin', password='debug_adminpass')
-
-    def test_setup(self):
-        response = self.client.get('/api/event')
-        self.assertEqual(response.status_code, 200)
-
 class EventsTestCase(TestCase):
     def setUp(self):
         Event.objects.create(title="Event 1",
@@ -553,11 +543,11 @@ class EndpointAuthorizationTestCase(TestCase):
             the user with provided credentials.
         """
         client = APIClient()
-        response = client.post('/api/token/',
+        response = client.post('/api/login',
                                {'username': username, 'password': password})
         if response.status_code != 200:
             raise ValueError('failed to authenticate with provided credentials')
-        client.credentials(HTTP_AUTHORIZATION='Bearer '+response.data['access'])
+        client.cookies = response.client.cookies
         return client
 
     def setUp(self):
