@@ -2,6 +2,8 @@ from . import views
 from django.urls import path
 
 urlpatterns = [
+    path('login', views.tkt_login, name='tkt_login'),
+    path('logout', views.tkt_logout, name='tkt_logout'),
     path('user', views.user_signup, name='user_signup'),
     path('user/<str:username>', views.user_info, name='user_info'),
     path('user/<str:username>/event', views.user_events, name='user_events'),
