@@ -303,11 +303,10 @@ class EndpointBehaviorTestCase(TestCase):
         SU_PWORD = 'debug_adminpass'
         self.su_client = APIClient()
         User.objects.create_superuser(SU_UNAME, password=SU_PWORD)
-        response = self.su_client.post('/api/token/',
+        response = self.su_client.post('/api/login',
                                     {'username': SU_UNAME,
                                      'password': SU_PWORD})
-        token = response.data['access']
-        self.su_client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
+        self.su_client.cookies = response.client.cookies
         self.users = []
         self.events = []
         self.admins = []
@@ -382,10 +381,10 @@ class EndpointBehaviorTestCase(TestCase):
         self.assertEqual(expected_tktuser.user.email, tu_data['email'])
         # Test malformed POST request
         response = self.su_client.post('/api/user', {'blob': 'malformed payload'})
-        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.status_code, 400)
         # Test POST request with colliding username
         response = self.su_client.post('/api/user', tu_data)
-        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.status_code, 400)
 
         # /api/user/<str>/event
         # Test request to invalid username
