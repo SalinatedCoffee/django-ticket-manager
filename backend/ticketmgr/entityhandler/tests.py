@@ -386,6 +386,7 @@ class EndpointBehaviorTestCase(TestCase):
         response = self.su_client.post('/api/user', tu_data)
         self.assertEqual(response.status_code, 400)
 
+        """
         # /api/user/<str>/event
         # Test request to invalid username
         ev_data = {'event_uuid': str(uuid.uuid4)}
@@ -413,6 +414,7 @@ class EndpointBehaviorTestCase(TestCase):
                                     ev_data)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['error'], 'Event does not exist.')
+        """
 
     def test_event_get_endpoints(self):
         # /api/event
@@ -583,6 +585,7 @@ class EndpointAuthorizationTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['user']['username'], 'user1')
 
+    """
     def test_user_post_endpoints(self):
         payload = {'event_uuid': str(self.event.uuid)}
         # only admins can post event to user
@@ -595,6 +598,7 @@ class EndpointAuthorizationTestCase(TestCase):
         response = self.amn_client.post(f'/api/user/{self.user.user.username}/event', payload)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['uuid'], str(self.event.uuid))
+    """
 
     def test_event_get_endpoints(self):
         # Test event list GET request by user, agent, admin
