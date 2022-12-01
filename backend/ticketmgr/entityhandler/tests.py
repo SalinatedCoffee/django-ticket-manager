@@ -9,6 +9,17 @@ from .models import *
 
 TEST_EV_DATETIME = timezone.datetime.now(timezone.utc)
 
+# TODO: Write endpoints for session login
+# TODO: Refactor tests to use cookie-based session auth
+class TestTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.client.login(username='debug_admin', password='debug_adminpass')
+
+    def test_setup(self):
+        response = self.client.get('/api/event')
+        self.assertEqual(response.status_code, 200)
+
 class EventsTestCase(TestCase):
     def setUp(self):
         Event.objects.create(title="Event 1",
@@ -221,7 +232,74 @@ class RegistrationCheckTestCase(TestCase):
         self.assertTrue(user1.registered_to_event(ev1))
         self.assertFalse(user2.registered_to_event(ev2))
 
-class EndpointLogicTestCase(TestCase):
+class EndpointAuthenticationTestCase(TestCase):
+    def setUp(self):
+        self.ev = Event.objects.create(title='Ev',
+                                       description='Ev.',
+                                       datetime=timezone.datetime.now(timezone.utc))
+        self.client = APIClient()
+        self.su = User.objects.create_superuser('test_su', password='password')
+        self.u = User.objects.create_user('test_u', password='password')
+        self.usr = TktUser.objects.create(user=User.objects.create_user('user1',
+                                                                   'user1@domain.com',
+                                                                   'user1pass',
+                                                                   first_name='John',
+                                                                   last_name='Doe'))
+        self.agt = TktAgent.objects.create(agent=User.objects.create_user('agent1',
+                                                                     'agent1@domain.com',
+                                                                     'agent1pass',
+                                                                     first_name='Jane',
+                                                                     last_name='Doe'),
+                                                                     event=self.ev)
+        self.amn = TktAdmin.objects.create(admin=User.objects.create_user('admin1',
+                                                                     'admin1@domain.com',
+                                                                     'admin1pass',
+                                                                     first_name='Ad',
+                                                                     last_name='Ministrator'))
+
+    def test_authentication_login(self):
+        # /api/login
+        # Test login as misconfigured Django User
+        response = self.client.post('/api/login',
+                                    {'username': 'test_u',
+                                     'password': 'password'})
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.data.get('error'), 'Failed to resolve user type.')
+        self.assertIsNone(response.client.cookies.get('sessionid'))
+        # Test login as Django Superuser
+        response = self.client.post('/api/login',
+                                    {'username': 'test_su',
+                                     'password': 'password'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.get('message'), 'Logged in as superuser.')
+        self.assertIsNotNone(response.client.cookies.get('sessionid'))
+        # Test login as TktUser
+        response = self.client.post('/api/login',
+                                    {'username': 'user1',
+                                     'password': 'user1pass'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.data.get('user'))
+        self.assertIsNotNone(response.client.cookies.get('sessionid'))
+        # Test login as TktAgent
+        response = self.client.post('/api/login',
+                                    {'username': 'agent1',
+                                     'password': 'agent1pass'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.data.get('agent'))
+        self.assertIsNotNone(response.client.cookies.get('sessionid'))
+        # Test login as TktAdmin
+        response = self.client.post('/api/login',
+                                    {'username': 'admin1',
+                                     'password': 'admin1pass'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.data.get('admin'))
+        self.assertIsNotNone(response.client.cookies.get('sessionid'))
+        
+
+    def test_authentication_logout(self):
+        self.assertTrue(False)
+
+class EndpointBehaviorTestCase(TestCase):
     def setUp(self):
         SU_UNAME = 'debug_admin'
         SU_PWORD = 'debug_adminpass'
