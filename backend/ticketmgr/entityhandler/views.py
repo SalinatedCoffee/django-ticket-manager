@@ -6,13 +6,48 @@
 #TODO: Remove redundant logic from endpoints
 #      (eg. users can be registered via /user/<username>/event AND /event/<ev_uuid>/user)
 from .serializers import *
+from django.contrib.auth import authenticate, login, logout
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
-
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
+
+@api_view(['POST'])
+def tkt_login(request):
+    """Logs in a Tkt-entity and sets a session cookie upon success.
+    JSON format: ``{'username': <str>, 'password': <str>}``
+    """
+    username = request.data.get('username')
+    password = request.data.get('password')
+
+    if username is None or password is None:
+        return Response({'error': 'Malformed payload.'}, status.HTTP_400_BAD_REQUEST)
+    
+    user = authenticate(username=username, password=password)
+    if user is None:
+        return Response({'error': 'User with given credentials does not exist.'},
+                        status.HTTP_400_BAD_REQUEST)
+
+    login(request, user)
+    if hasattr(user, 'tktuser'):
+        serializer = TktUserSerializer(user.tktuser)
+    elif hasattr(user, 'tktagent'):
+        serializer = TktAgentSerializer(user.tktagent)
+    elif hasattr(user, 'tktadmin'):
+        serializer = TktAdminSerializer(user.tktadmin)
+    elif user.is_superuser:
+        return Response({'message': 'Logged in as superuser.'})
+    else:
+        return Response({'error': 'Failed to resolve user type.'},
+                        status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response(serializer.data, status.HTTP_200_OK)
+
+@api_view(['GET'])
+def tkt_logout(request):
+    logout(request)
+    return Response(status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def user_signup(request):
