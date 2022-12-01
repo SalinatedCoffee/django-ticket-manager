@@ -63,9 +63,9 @@ class ViewsTestCase(TestCase):
     def setUp(self):
         User.objects.create_superuser('superuser', password='supass')
         self.client = APIClient()
-        response = self.client.post('/api/token/',
+        response = self.client.post('/api/login/',
                                     {'username': 'superuser', 'password': 'supass'})
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer '+response.data['access'])
+        self.client.cookies = response.client.cookies
         self.ev = Event.objects.create(title="Event 1",
                                   description="This is the first event.",
                                   datetime=timezone.datetime.now(timezone.utc))
