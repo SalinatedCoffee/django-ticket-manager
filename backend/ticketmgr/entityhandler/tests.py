@@ -9,7 +9,6 @@ from .models import *
 
 TEST_EV_DATETIME = timezone.datetime.now(timezone.utc)
 
-# TODO: Write endpoints for session login
 # TODO: Refactor tests to use cookie-based session auth
 class TestTestCase(TestCase):
     def setUp(self):
@@ -297,7 +296,16 @@ class EndpointAuthenticationTestCase(TestCase):
         
 
     def test_authentication_logout(self):
-        self.assertTrue(False)
+        response = self.client.post('/api/login',
+                                    {'username': 'test_su',
+                                     'password': 'password'})
+        self.client.cookies = response.client.cookies
+        response = self.client.get('/api/event')
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get('/api/logout')
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get('/api/event')
+        self.assertEqual(response.status_code, 403)
 
 class EndpointBehaviorTestCase(TestCase):
     def setUp(self):
