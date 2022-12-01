@@ -23,8 +23,8 @@ class TktUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TktUser
-        fields = ['id', 'user', 'uuid', 'event_count']
-        read_only_fields = ['id', 'user', 'uuid', 'event_count']
+        fields = ['user', 'uuid', 'event_count']
+        read_only_fields = ['user', 'uuid', 'event_count']
         depth = 1
     
     def get_event_count(self, obj):
@@ -38,8 +38,8 @@ class TktAdminSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TktAdmin
-        fields = ['id', 'admin', 'event_count']
-        read_only_fields = ['id', 'admin', 'event_count']
+        fields = ['admin', 'event_count']
+        read_only_fields = ['admin', 'event_count']
         depth = 1
 
     def get_event_count(self, obj):
@@ -53,8 +53,8 @@ class TktAgentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TktAgent
-        fields = ['id', 'agent', 'event']
-        read_only_fields = ['id', 'agent', 'event']
+        fields = ['agent', 'event']
+        read_only_fields = ['agent', 'event']
         depth = 1
 
 class EventSerializer(serializers.ModelSerializer):
@@ -62,5 +62,5 @@ class EventSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Event
-        fields = ['id', 'title', 'description', 'datetime', 'uuid']
-        read_only_fields = ['id', 'uuid']
+        fields = ['title', 'description', 'datetime', 'uuid']
+        read_only_fields = ['uuid']
