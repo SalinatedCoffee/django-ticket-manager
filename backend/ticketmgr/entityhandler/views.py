@@ -1,10 +1,9 @@
-#TODO: Consider catching multiple exceptions and returning appropriate
-#      HTTP response codes
-#TODO: Check disclosed information through serialized models with nested relationships
-#      (do endpoints accidentally show other user info to user through event endpoints, etc)
-#TODO: Support DELETE methods for appropriate endpoints (unregister entities from events, etc)
-#TODO: Remove redundant logic from endpoints
-#      (eg. users can be registered via /user/<username>/event AND /event/<ev_uuid>/user)
+# TODO: Consider catching multiple exceptions and returning appropriate
+#       HTTP response codes
+# TODO: Check disclosed information through serialized models with nested relationships
+#       (do endpoints accidentally show other user info to user through event endpoints, etc)
+# TODO: Support DELETE methods for appropriate endpoints (unregister entities from events, etc)
+# TODO: Pagination for user/event list requests
 from .serializers import *
 from django.contrib.auth import authenticate, login, logout
 from rest_framework import status
@@ -83,15 +82,11 @@ def user_info(request, username):
         serializer = TktUserSerializer(user)
         return Response(serializer.data, status.HTTP_200_OK)
 
-@api_view(['GET', 'POST'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_events(request, username):
-    """First queries a ``TktUser`` with ``username``. Then on
-    ``GET``: Returns a JSON representation of all ``Event`` objects referenced by
-    the queried ``TktUser``.
-    ``POST``: Adds a reference to an ``Event`` with ``event_uuid``
-    to the queried ``TktUser``.
-    JSON format: ``{'event_uuid': <str>}``
+    """Queries a ``TktUser`` with ``username``, then returns a JSON response
+    containing all ``Event`` objects referenced by the queried ``TktUser``.
     """
     try:
         user = User.objects.get(username=username).tktuser
@@ -104,6 +99,7 @@ def user_events(request, username):
         serializer = EventSerializer(list(user.events.all()), many=True)
         return Response(serializer.data, status.HTTP_200_OK)
     
+    """
     elif request.method == 'POST':
         # TODO: Admins should only be able to register users to events that
         #       it is responsible for
@@ -117,6 +113,7 @@ def user_events(request, username):
                             status.HTTP_404_NOT_FOUND)
         user.events.add(event)
         return Response(EventSerializer(event).data, status.HTTP_200_OK)
+    """
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
