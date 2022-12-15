@@ -38,6 +38,7 @@ ALLOWED_HOSTS = [os.getenv("ALLOWED_HOST_1")]
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'entityhandler.apps.EntityhandlerConfig',
     'otphandler.apps.OtphandlerConfig',
     'rest_framework',
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -69,6 +71,16 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ]
 }
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ORIGIN_WHITELIST = [
+    os.getenv("CORS_ORIG_WL_1")
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    os.getenv("CSRF_TRUSTED_ORIG_1")
+]
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 
