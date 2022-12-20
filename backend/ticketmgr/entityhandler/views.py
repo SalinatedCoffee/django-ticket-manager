@@ -6,13 +6,20 @@
 # TODO: Pagination for user/event list requests
 from .serializers import *
 from django.contrib.auth import authenticate, login, logout
+from django.middleware.csrf import get_token
+from django.views.decorators.csrf import csrf_protect
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
 
+@api_view()
+def csrf(request):
+  return Response({'csrfToken': get_token(request)})
+
 @api_view(['POST'])
+@csrf_protect
 def tkt_login(request):
     """Logs in a Tkt-entity and sets a session cookie upon success.
     JSON format: ``{'username': <str>, 'password': <str>}``
@@ -44,6 +51,7 @@ def tkt_login(request):
     return Response(serializer.data, status.HTTP_200_OK)
 
 @api_view(['GET'])
+@csrf_protect
 def tkt_logout(request):
     logout(request)
     return Response(status=status.HTTP_200_OK)
