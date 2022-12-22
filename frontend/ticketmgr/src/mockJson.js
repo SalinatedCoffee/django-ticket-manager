@@ -1,5 +1,14 @@
 // Various JSON objects for use in mock testing.
 
+export const MOCK_USR_REG = JSON.parse(`
+  {
+    "username": "MockUser1",
+    "password": "MockUserPass",
+    "email": "MockUser@domain.com",
+    "first_name": "John",
+    "last_name": "Mock"
+  }`);
+
 export const MOCK_EV_LIST = JSON.parse(`
   [
     {
