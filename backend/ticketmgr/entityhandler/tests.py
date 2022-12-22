@@ -453,7 +453,6 @@ class EndpointBehaviorTestCase(TestCase):
         # Test valid GET request
         ev_uuid = self.events[0].uuid
         response = self.su_client.get(f'/api/event/{ev_uuid}/agent')
-        self.assertEqual(response.data[0]['event']['uuid'], str(ev_uuid))
         self.assertEqual(response.data[0]['agent']['email'], self.agents[0].agent.email)
 
         # /api/event/<uuid>/admin

@@ -46,15 +46,14 @@ class TktAdminSerializer(serializers.ModelSerializer):
         return obj.events.count()
 
 class TktAgentSerializer(serializers.ModelSerializer):
-    # TODO: Serialize subset of event params instead of all
     """DRF serializer for ``entityhandler.models.TktAgent``.
     """
     agent = UserSerializer()
 
     class Meta:
         model = TktAgent
-        fields = ['agent', 'event']
-        read_only_fields = ['agent', 'event']
+        fields = ['agent']
+        read_only_fields = ['agent']
         depth = 1
 
 class EventSerializer(serializers.ModelSerializer):
