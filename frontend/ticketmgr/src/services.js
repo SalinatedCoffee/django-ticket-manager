@@ -9,10 +9,11 @@ export const TktEntType = {
   Admin: Symbol("tktadmin")
 };
 
-export async function register(info) {
+export async function register() {
   // this should create a new tktuser account given json as input
   // return true and valid json obj on success
   // other entity types are currently unsupported by endpoint
+  return
 }
 
 export async function login() {
