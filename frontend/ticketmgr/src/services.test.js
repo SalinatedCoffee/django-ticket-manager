@@ -1,7 +1,7 @@
 import * as mockJson from './mockJson';
 import * as services from './services';
 
-const HTTP_STATUS = (code) => { return {status: code} }
+const HTTP_STATUS = (code) => { return {status: code}; };
 
 describe('backend interaction services', () => {
   beforeEach(() => {
@@ -69,53 +69,53 @@ describe('backend interaction services', () => {
   });
 
   test.skip('entity logout', () => {
-    return
+    return;
   });
 
   test.skip('user details', () => {
-    return
+    return;
   });
 
   test.skip('event details', () => {
-    return
+    return;
   });
 
   test.skip('event list', () => {
-    return
+    return;
   });
 
   test.skip('users registered to an event', () => {
-    return
+    return;
   });
 
   test.skip('agents registered to an event', () => {
-    return
+    return;
   });
 
   test.skip('admins registered to an event', () => {
-    return
+    return;
   });
 
   test.skip('new event creation', () => {
-    return
+    return;
   });
 });
 
 
 describe('utility services', () => {
   test.skip('fetch() wrapper', () => {
-    return
+    return;
   });
 
   test.skip('initial csrf setter', () => {
-    return
+    return;
   });
 
   test.skip('get locally saved TOTP secret', () => {
-    return
+    return;
   });
 
   test.skip('locally save TOTP secret', () => {
-    return
+    return;
   });
 });

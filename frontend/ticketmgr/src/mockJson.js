@@ -123,9 +123,26 @@ export const MOCK_USR_DETAIL = JSON.parse(`
     "event_count": 0
   }`);
 
-export const MOCK_AGT_DETAIL = JSON.parse(``);
+export const MOCK_AGT_DETAIL = JSON.parse(`
+  {
+    "agent": {
+      "username": "agent0",
+      "first_name": "Jane0",
+      "last_name": "Doe0",
+      "email": "agent0@domain.com"
+    }
+  }`);
 
-export const MOCK_AMN_DETAIL = JSON.parse(``);
+export const MOCK_AMN_DETAIL = JSON.parse(`
+  {
+    "admin": {
+      "username": "admin0",
+      "first_name": "Admin0",
+      "last_name": "lname0",
+      "email": "admin0@domain.com"
+    },
+    "event_count": 1
+  }`);
 
 export const MOCK_EV_DETAIL = JSON.parse(`
   {
