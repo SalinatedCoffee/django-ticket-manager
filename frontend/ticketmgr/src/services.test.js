@@ -68,16 +68,51 @@ describe('backend interaction services', () => {
         });
   });
 
-  test.skip('entity logout', () => {
-    return;
+  test.skip('entity logout', async () => {
+    // Should return true on success
+    fetch.mockResponseOnce({}, HTTP_STATUS(200));
+    await services.logout()
+      .then(ret => {
+        expect(ret).toEqual(true);
+      });
   });
 
-  test.skip('user details', () => {
-    return;
+  test.skip('user details', async () => {
+    // Should return [true, <JSON>] on success
+    fetch.mockResponseOnce(mockJson.MOCK_USR_DETAIL, HTTP_STATUS(200));
+    await services.entityDetails('username')
+      .then(ret => {
+        expect(ret[0]).toEqual(true);
+        expect(ret[1].uuid).toEqual(mockJson.MOCK_USR_DETAIL.uuid);
+      });
+
+    // Should return [false, <Status code w/ JSON>] on failure
+    fetch.mockResponseOnce({message: 'fail'}, HTTP_STATUS(403));
+    await services.entityDetails('wronguser')
+      .then(ret => {
+        expect(ret[0]).toEqual(false);
+        expect(ret[1].status_code).toEqual(403);
+        expect(ret[1].message).toEqual('fail');
+      });
   });
 
-  test.skip('event details', () => {
-    return;
+  test.skip('event details', async () => {
+    // Should return [true, <JSON>] on success
+    fetch.mockResponseOnce(mockJson.MOCK_EV_DETAIL, HTTP_STATUS(200));
+    await services.eventDetails('uuidv4_string')
+      .then(ret => {
+        expect(ret[0]).toEqual(true);
+        expect(ret[1].uuid).toEqual(mockJson.MOCK_EV_DETAIL.uuid);
+      });
+
+    // Should return [false, <Status code w/ JSON>] on failure
+    fetch.mockResponseOnce({message: 'fail'}, HTTP_STATUS(403));
+    await services.eventDetails('bad_uuidv4')
+      .then(ret => {
+        expect(ret[0]).toEqual(false);
+        expect(ret[1].status_code).toEqual(403);
+        expect(ret[1].message).toEqual('fail');
+      });
   });
 
   test.skip('event list', () => {
