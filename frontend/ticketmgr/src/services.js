@@ -1,6 +1,6 @@
 // Backend interaction
 
-const ENDPOINT_URI = "http://localhost:8000/api/";
+// const ENDPOINT_URI = "http://localhost:8000/api/";
 
 export const TktEntType = {
   // enum for usertypes

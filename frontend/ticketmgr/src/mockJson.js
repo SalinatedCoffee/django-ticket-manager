@@ -144,6 +144,13 @@ export const MOCK_AMN_DETAIL = JSON.parse(`
     "event_count": 1
   }`);
 
+export const MOCK_EV_REG = JSON.parse(`
+  {
+    "title": "Event0",
+    "description": "This is event 0.",
+    "datetime" :"2022-12-01T08:12:46.787312Z"
+  }`);
+
 export const MOCK_EV_DETAIL = JSON.parse(`
   {
     "title": "Event0",
