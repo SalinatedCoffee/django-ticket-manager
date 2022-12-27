@@ -1,3 +1,5 @@
+// TODO: Consider refactoring redundant functions into one
+//       eg. register(), logout(), entityDetails(), etc
 import * as mockJson from './mockJson';
 import * as services from './services';
 
@@ -115,24 +117,102 @@ describe('backend interaction services', () => {
       });
   });
 
-  test.skip('event list', () => {
-    return;
+  test.skip('event list', async () => {
+    // Should return [true, <JSON>] on success
+    fetch.mockResponseOnce(mockJson.MOCK_EV_LIST, HTTP_STATUS(200));
+    await services.eventList()
+      .then(ret => {
+        expect(ret[0]).toEqual(true);
+        expect(ret[1][0].uuid).toEqual(mockJson.MOCK_EV_LIST[0].uuid);
+        expect(ret[1][1].uuid).toEqual(mockJson.MOCK_EV_LIST[1].uuid);
+      });
+
+    // Should return [false, <Status code w/ JSON>] on failure
+    fetch.mockResponseOnce({message: 'fail'}, HTTP_STATUS(403));
+    await services.eventList()
+      .then(ret => {
+        expect(ret[0]).toEqual(false);
+        expect(ret[1].message).toEqual('fail');
+      });
   });
 
-  test.skip('users registered to an event', () => {
-    return;
+  test.skip('users registered to an event', async () => {
+    // Should return [true, <JSON>] on success given event uuid and entity enum
+    fetch.mockResponseOnce(mockJson.MOCK_USR_LIST, HTTP_STATUS(200));
+    await services.eventRegisteredEntityList('ev_uuidv4', services.TktEntType.User)
+      .then(ret => {
+        expect(ret[0]).toEqual(true);
+        expect(ret[1][0].uuid).toEqual(mockJson.MOCK_USR_LIST[0].uuid);
+        expect(ret[1][2].uuid).toEqual(mockJson.MOCK_USR_LIST[2].uuid);
+      });
+
+    // Should return [false, <Status code w/ JSON>] on failure
+    fetch.mockResponseOnce({message: 'fail'}, HTTP_STATUS(403));
+    await services.eventRegisteredEntityList('wrong_uuidv4', services.TktEntType.User)
+      .then(ret => {
+        expect(ret[0]).toEqual(false);
+        expect(ret[1].status_code).toEqual(403);
+        expect(ret[1].message).toEqual('fail');
+      });
   });
 
-  test.skip('agents registered to an event', () => {
-    return;
+  test.skip('agents registered to an event', async () => {
+    // Should return [true, <JSON>] on success given event uuid and entity enum
+    fetch.mockResponseOnce(mockJson.MOCK_AGT_LIST, HTTP_STATUS(200));
+    await services.eventRegisteredEntityList('ev_uuidv4', services.TktEntType.Agent)
+      .then(ret => {
+        expect(ret[0]).toEqual(true);
+        expect(ret[1][0].agent.username).toEqual(mockJson.MOCK_AGT_LIST[0].agent.username);
+        expect(ret[1][2].agent.username).toEqual(mockJson.MOCK_AGT_LIST[2].agent.username);
+      });
+
+    // Should return [false, <Status code w/ JSON>] on failure
+    fetch.mockResponseOnce({message: 'fail'}, HTTP_STATUS(403));
+    await services.eventRegisteredEntityList('wrong_uuidv4', services.TktEntType.Agent)
+      .then(ret => {
+        expect(ret[0]).toEqual(false);
+        expect(ret[1].status_code).toEqual(403);
+        expect(ret[1].message).toEqual('fail');
+      })
   });
 
-  test.skip('admins registered to an event', () => {
-    return;
+  test.skip('admins registered to an event', async () => {
+    // Should return [true, <JSON>] on success given event uuid and entity enum
+    fetch.mockResponseOnce(mockJson.MOCK_AMN_LIST, HTTP_STATUS(200));
+    await services.eventRegisteredEntityList('ev_uuidv4', services.TktEntType.Admin)
+      .then(ret => {
+        expect(ret[0]).toEqual(true);
+        expect(ret[1][0].admin.username).toEqual(mockJson.MOCK_AMN_LIST[0].admin.username);
+        expect(ret[1][1].admin.username).toEqual(mockJson.MOCK_AMN_LIST[1].admin.username);
+      });
+
+    // Should return [false, <Status code w/ JSON>] on failure
+    fetch.mockResponseOnce({message: 'fail'}, HTTP_STATUS(403));
+    await services.eventRegisteredEntityList('wrong_uuidv4', services.TktEntType.Admin)
+      .then(ret => {
+        expect(ret[0]).toEqual(false);
+        expect(ret[1].status_code).toEqual(403);
+        expect(ret[1].message).toEqual('fail');
+      });
   });
 
-  test.skip('new event creation', () => {
-    return;
+  test.skip('new event creation', async () => {
+    // Should return [true, <JSON>] on success
+    fetch.mockResponseOnce(mockJson.MOCK_EV_DETAIL, HTTP_STATUS(201));
+    await services.createNewEvent(mockJson.MOCK_EV_REG)
+      .then(ret => {
+        expect(ret[0]).toEqual(true);
+        expect(ret[1].uuid).toEqual(mockJson.MOCK_EV_DETAIL.uuid);
+      });
+
+    // Should return [false, <Status code /w JSON>] on failure
+    fetch.mockResponseOnce({message: 'fail'}, HTTP_STATUS(403));
+    await services.createNewEvent({})
+      .then(ret => {
+        expect(ret[0]).toEqual(false);
+        expect(ret[1].status_code).toEqual(403);
+        expect(ret[1].message).toEqual('fail');
+      });
   });
 });
 
