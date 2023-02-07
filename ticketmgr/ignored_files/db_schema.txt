@@ -1,0 +1,45 @@
+/*
+Entities
+
+users {
+id int
+username varchar(32)
+password varchar(32)
+salt varchar(16)
+}
+
+agents {
+id int
+event int
+}
+
+admins {
+id int
+username varchar(32)
+password varchar(32)
+salt varchar(16)
+}
+
+
+Event data
+
+events {
+id int
+base64id char(4)
+title text
+description text
+}
+
+
+Junction tables
+
+userevents {
+users.id int
+events.id int
+}
+
+adminevents {
+admins.id int
+events.id int
+}
+*/
