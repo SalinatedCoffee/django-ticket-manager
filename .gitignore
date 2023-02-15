@@ -1,9 +1,9 @@
 ### Project ignores
 # Random junk
-backend/ticketmgr/ignored_files
+ticketmgr/ignored_files
 cookies.txt
 # venv
-backend/ticketmgr/venv
+ticketmgr/venv
 
 ### Python-related entries
 # Byte-compiled / optimized / DLL files
